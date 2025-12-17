@@ -94,5 +94,5 @@ This project is proprietary software. All rights reserved.
 ## Contact
 
 LENTERA Team
-- Email: contact@lentera.id
+- Email: lenteraina2025@gmail.com
 - GitHub: [@lentera-star](https://github.com/lentera-star)

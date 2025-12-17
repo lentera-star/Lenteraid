@@ -1,0 +1,51 @@
+services:
+  # Ollama - Local LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: lentera-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    restart: unless-stopped
+    # Untuk GPU support (jika ada NVIDIA GPU)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+    # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lentera-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - ENVIRONMENT=development
+    depends_on:
+      - ollama
+    restart: unless-stopped
+  # Whisper STT Service (Optional - dapat di-enable jika butuh service terpisah)
+  # whisper:
+  #   image: onerahmet/openai-whisper-asr-webservice:latest
+  #   container_name: lentera-whisper
+  #   ports:
+  #     - "9000:9000"
+  #   environment:
+  #     - ASR_MODEL=base
+  #     - ASR_ENGINE=openai_whisper
+  #   restart: unless-stopped
+
+volumes:
+  ollama_data:
+    driver: local

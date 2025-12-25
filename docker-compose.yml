@@ -29,8 +29,16 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - whisper_models:/app/models/whisper  # Persistent Whisper models
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama2
+      - WHISPER_MODEL=base
+      - WHISPER_DEVICE=cpu
+      - WHISPER_COMPUTE_TYPE=int8
+      - WHISPER_LANGUAGE=id
+      - TTS_VOICE=id-ID-GadisNeural
+      - TTS_RATE=+0%
       - ENVIRONMENT=development
     depends_on:
       - ollama
@@ -48,4 +56,6 @@ services:
 
 volumes:
   ollama_data:
+    driver: local
+  whisper_models:
     driver: local

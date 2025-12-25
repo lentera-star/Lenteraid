@@ -39,11 +39,11 @@
 | Implement WebSocket | Backend | API | High | 🔨 In Progress | 30% | Week 4 |
 | Enable Supabase Realtime | Database | Database | High | 🔨 In Progress | 60% | Week 3 |
 | Create integration tests | Database | Testing | Medium | 🔨 In Progress | 40% | Week 4 |
-| **Review Ollama prompts** | **AI Engineer** | **AI/ML** | **High** | **⏸️ Not Started** | **0%** | **Week 3** |
-| **Test different LLM models** | **AI Engineer** | **AI/ML** | **High** | **⏸️ Not Started** | **0%** | **Week 3** |
-| **Optimize prompts for mental health** | **AI Engineer** | **AI/ML** | **Medium** | **⏸️ Not Started** | **0%** | **Week 4** |
-| **Research RAG architectures** | **AI Engineer** | **AI/ML** | **Medium** | **⏸️ Not Started** | **0%** | **Week 4** |
-| **Plan fine-tuning strategy** | **AI Engineer** | **AI/ML** | **Medium** | **⏸️ Not Started** | **0%** | **Week 4** |
+| **Review Ollama prompts** | **Backend** | **AI/ML** | **High** | **⏸️ Not Started** | **0%** | **Week 3** |
+| **Test different LLM models** | **Backend** | **AI/ML** | **High** | **⏸️ Not Started** | **0%** | **Week 3** |
+| **Optimize prompts for mental health** | **Backend** | **AI/ML** | **Medium** | **⏸️ Not Started** | **0%** | **Week 4** |
+| **Research RAG architectures** | **Backend** | **AI/ML** | **Medium** | **⏸️ Not Started** | **0%** | **Week 4** |
+| **Plan fine-tuning strategy** | **Backend** | **AI/ML** | **Medium** | **⏸️ Not Started** | **0%** | **Week 4** |
 | Connect frontend to APIs | Frontend | Integration | High | ⏸️ Blocked | 0% | Week 4 |
 | Test voice call end-to-end | All | Testing | High | ⏸️ Blocked | 0% | Week 4 |
 
@@ -58,14 +58,14 @@
 | Add error handling | Backend | Backend | High | ⏸️ Planned | Week 5 |
 | Add logging & monitoring | Backend | DevOps | Medium | ⏸️ Planned | Week 5 |
 | API endpoint optimization | Backend | Backend | Medium | ⏸️ Planned | Week 5 |
-| **Setup vector database** | **AI Engineer** | **AI/ML** | **🚨 Critical** | **⏸️ Planned** | **Week 5** |
-| **Create knowledge base** | **AI Engineer** | **AI/ML** | **🚨 Critical** | **⏸️ Planned** | **Week 5** |
-| **Implement document embedding** | **AI Engineer** | **AI/ML** | **High** | **⏸️ Planned** | **Week 5** |
-| **Build RAG retrieval pipeline** | **AI Engineer** | **AI/ML** | **High** | **⏸️ Planned** | **Week 5** |
-| **Integrate RAG with chat** | **AI Engineer** | **AI/ML** | **High** | **⏸️ Planned** | **Week 5** |
-| **Collect fine-tuning dataset** | **AI Engineer** | **AI/ML** | **Medium** | **⏸️ Planned** | **Week 5** |
-| **Fine-tune Ollama model** | **AI Engineer** | **AI/ML** | **Medium** | **⏸️ Planned** | **Week 6** |
-| **Evaluate model performance** | **AI Engineer** | **AI/ML** | **Medium** | **⏸️ Planned** | **Week 6** |
+| **Setup vector database** | **Backend** | **AI/ML** | **🚨 Critical** | **⏸️ Planned** | **Week 5** |
+| **Create knowledge base** | **Backend** | **AI/ML** | **🚨 Critical** | **⏸️ Planned** | **Week 5** |
+| **Implement document embedding** | **Backend** | **AI/ML** | **High** | **⏸️ Planned** | **Week 5** |
+| **Build RAG retrieval pipeline** | **Backend** | **AI/ML** | **High** | **⏸️ Planned** | **Week 5** |
+| **Integrate RAG with chat** | **Backend** | **AI/ML** | **High** | **⏸️ Planned** | **Week 5** |
+| **Collect fine-tuning dataset** | **Backend** | **AI/ML** | **Medium** | **⏸️ Planned** | **Week 5** |
+| **Fine-tune Ollama model** | **Backend** | **AI/ML** | **Medium** | **⏸️ Planned** | **Week 6** |
+| **Evaluate model performance** | **Backend** | **AI/ML** | **Medium** | **⏸️ Planned** | **Week 6** |
 | Performance optimization | All | Optimization | High | ⏸️ Planned | Week 5 |
 | End-to-end testing | Database | Testing | High | ⏸️ Planned | Week 5 |
 | Write API documentation | Database | Documentation | Medium | ⏸️ Planned | Week 5 |
@@ -85,9 +85,9 @@
 | TTS Integration | Backend | Voice call, Frontend integration | End Week 3 | **URGENT - Start immediately** |
 | Voice Pipeline Complete | Backend | Sprint 2 completion | End Week 3 | Depends on STT + TTS |
 | Chat API with Ollama | Backend | Frontend chat feature | End Week 3 | Partially done |
-| LLM Prompt Optimization | AI Engineer | Chat quality | End Week 4 | Improve AI responses |
-| RAG Implementation | AI Engineer | Advanced AI features | End Week 5 | Critical for contextual responses |
-| Fine-tuning Setup | AI Engineer | Specialized responses | Week 6 | Mental health domain expertise |
+| LLM Prompt Optimization | Backend | Chat quality | End Week 4 | Improve AI responses |
+| RAG Implementation | Backend | Advanced AI features | End Week 5 | Critical for contextual responses |
+| Fine-tuning Setup | Backend | Specialized responses | Week 6 | Mental health domain expertise |
 | API Integration | Frontend | All features working | End Week 4 | Blocked by backend |
 | End-to-End Testing | All | Sprint 3, Deployment | Week 5 | Integration milestone |
 
@@ -98,9 +98,8 @@
 | Category | Total Tasks | Completed | In Progress | Not Started | % Complete |
 |----------|-------------|-----------|-------------|-------------|------------|
 | Frontend | 18 | 16 | 2 | 0 | 89% |
-| Backend | 10 | 4 | 2 | 4 | 40% |
+| Backend + AI/ML | 22 | 4 | 2 | 16 | 18% |
 | Database | 10 | 7 | 2 | 1 | 70% |
-| AI/ML | 12 | 0 | 0 | 12 | 0% |
 | Integration | 5 | 0 | 1 | 4 | 0% |
 | Testing | 5 | 0 | 2 | 3 | 0% |
 | **TOTAL** | **60** | **27** | **9** | **24** | **45%** |
@@ -120,13 +119,6 @@
 - [ ] Install & test TTS
 - [ ] Build voice pipeline prototype
 - [ ] Complete Ollama chat integration
-
-#### Database
-- [ ] Enable Realtime on messages table
-- [ ] Test Realtime subscriptions
-- [ ] Document integration patterns
-
-#### AI Engineer 🆕 NEW MEMBER
 - [ ] Review existing Ollama prompts
 - [ ] Test different models (llama2 vs phi vs mistral)
 - [ ] Benchmark response quality
@@ -144,13 +136,6 @@
 - [ ] Complete WebSocket implementation
 - [ ] Test voice pipeline with frontend
 - [ ] Add logging & monitoring
-
-#### Database
-- [ ] Create integration test suite
-- [ ] Performance testing
-- [ ] Write API documentation
-
-#### AI Engineer
 - [ ] Optimize mental health prompts
 - [ ] Design conversation flow templates
 - [ ] Evaluate vector database options
@@ -164,17 +149,10 @@
 - [ ] UI polish & animations
 - [ ] Performance optimization
 
-#### Backend
+#### Backend ⚠️ PRIORITY
 - [ ] Production configuration
 - [ ] Error handling
 - [ ] API documentation
-
-#### Database
-- [ ] E2E testing
-- [ ] Deployment guide
-- [ ] Backup strategy
-
-#### AI Engineer ⚠️ PRIORITY
 - [ ] Setup vector database (Chroma)
 - [ ] Build mental health knowledge base
 - [ ] Implement RAG pipeline
@@ -241,9 +219,9 @@ Group tasks by assignee:
 - Current: Provider implementation, API prep
 
 ### Backend Lead
-- Total Tasks: 12
-- Completed: 4 (33%)
-- Current: **Voice pipeline (URGENT)**
+- Total Tasks: 24
+- Completed: 4 (17%)
+- Current: **Voice pipeline + AI/ML work (URGENT)**
 
 ### Database Lead
 - Total Tasks: 10

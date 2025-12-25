@@ -2,7 +2,7 @@
 
 > 💡 **Project**: AI-Powered Mental Health Counseling App  
 > 📅 **Timeline**: 6 weeks (3 sprints × 2 weeks)  
-> 👥 **Team**: 4 members  
+> 👥 **Team**: 3 members  
 > 📊 **Current Progress**: 65% overall
 
 ---
@@ -14,16 +14,12 @@
 **Focus**: UI/UX, State Management, Mobile App
 
 ### ⚙️ Member 2: Backend Lead
-**Role**: Python/FastAPI Developer  
-**Focus**: REST APIs, WebSocket, Voice Pipeline (STT/TTS)
+**Role**: Python/FastAPI + AI/ML Developer  
+**Focus**: REST APIs, WebSocket, Voice Pipeline (STT/TTS), RAG, Fine-tuning, LLM Optimization, Prompt Engineering
 
 ### 🗄️ Member 3: Database Lead
 **Role**: Full-Stack Support  
 **Focus**: Supabase, Testing, Integration, Deployment
-
-### 🤖 Member 4: AI Engineer
-**Role**: ML/AI Specialist  
-**Focus**: RAG, Fine-tuning, LLM Optimization, Prompt Engineering
 
 ---
 
@@ -160,25 +156,6 @@
 - [ ] Implement streaming responses
 - [ ] Mood analysis with LLM
 
-### Sprint 3 ⏸️ PLANNED
-
-**Production Readiness**
-- [ ] Environment configuration
-- [ ] Error handling & logging
-- [ ] Rate limiting
-- [ ] API documentation (Swagger)
-- [ ] Performance monitoring
-- [ ] API endpoint optimization
-
----
-
-## 🤖 AI Engineer - Detailed Tasks
-
-### Sprint 1 ⏸️ NOT STARTED (0%)
-*(New role - joining in Sprint 2)*
-
-### Sprint 2 🔨 IN PROGRESS (0%)
-
 **LLM Optimization**
 - [ ] Review & optimize Ollama prompts
 - [ ] Test different models (llama2, phi, mistral)
@@ -219,6 +196,18 @@
 - [ ] Build emotion detection from text
 - [ ] Create safety filters (crisis detection)
 - [ ] Recommendation engine for resources
+
+**Production Readiness**
+- [ ] Environment configuration
+- [ ] Error handling & logging
+- [ ] Rate limiting
+- [ ] API documentation (Swagger)
+- [ ] Performance monitoring
+- [ ] API endpoint optimization
+
+---
+
+
 
 ---
 
@@ -338,9 +327,8 @@
 | Role | Progress | Status | Notes |
 |------|----------|--------|-------|
 | Frontend | 75% | 🟢 Ahead | UI complete, waiting for backend |
-| Backend | 45% | 🔴 Behind | Voice features critical |
+| Backend + AI/ML | 30% | 🔴 Behind | Voice + AI features critical |
 | Database | 80% | 🟢 Ahead | Solid foundation ready |
-| AI Engineer | 0% | 🟡 New | Starting Sprint 2, RAG in Sprint 3 |
 
 ### Sprint 2 Progress by Task
 
@@ -367,9 +355,8 @@
 **Monday**: Sprint 2 planning
 **Tuesday-Thursday**: Development
 - Frontend: Provider + API integration prep
-- Backend: **PRIORITY** - Whisper + TTS integration
+- Backend: **PRIORITY** - Whisper + TTS integration + Prompt optimization
 - Database: Realtime setup
-- AI Engineer: Prompt optimization, model testing
 
 **Friday**: Sprint review & standup
 

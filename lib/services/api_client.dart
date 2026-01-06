@@ -7,19 +7,22 @@ class ApiConfig {
   // VPS IP for production
   static const String vpsIp = '84.247.150.83';
   
-  // Backend URL - automatically uses VPS in release mode, localhost in debug
+  // Backend URL - Uses VPS by default for testing production
+  // To use local backend, set BACKEND_URL env var: flutter run --dart-define=USE_LOCAL=true
+  static const bool _useLocal = String.fromEnvironment('USE_LOCAL', defaultValue: 'false') == 'true';
+  
   static const String backendUrl = String.fromEnvironment(
     'BACKEND_URL',
-    defaultValue: kReleaseMode 
-        ? 'http://$vpsIp:8000'  // Production: VPS
-        : 'http://localhost:8000',  // Development: Local
+    defaultValue: _useLocal
+        ? 'http://localhost:8000'  // Local backend (when USE_LOCAL=true)
+        : 'http://$vpsIp:8000',     // VPS backend (default)
   );
   
   static const String wsUrl = String.fromEnvironment(
     'WS_URL',
-    defaultValue: kReleaseMode
-        ? 'ws://$vpsIp:8000'  // Production: VPS
-        : 'ws://localhost:8000',  // Development: Local
+    defaultValue: _useLocal
+        ? 'ws://localhost:8000'     // Local WebSocket
+        : 'ws://$vpsIp:8000',       // VPS WebSocket (default)
   );
   
   // API endpoints

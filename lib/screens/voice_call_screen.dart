@@ -1,6 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:lentera/theme.dart';
+import 'package:lentera/services/audio_recording_service.dart';
+import 'package:lentera/services/websocket_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class VoiceCallScreen extends StatefulWidget {
   const VoiceCallScreen({super.key});
@@ -10,34 +16,171 @@ class VoiceCallScreen extends StatefulWidget {
 }
 
 class _VoiceCallScreenState extends State<VoiceCallScreen> with SingleTickerProviderStateMixin {
+  // Services
+  final AudioRecordingService _audioService = AudioRecordingService();
+  final VoiceCallWebSocketService _wsService = VoiceCallWebSocketService();
+  final FlutterSoundPlayer _player = FlutterSoundPlayer();
+
+  // State
   bool _isConnecting = true;
   bool _isCallActive = false;
   bool _isMuted = false;
   bool _isSpeakerOn = false;
+  String _statusMessage = 'Menghubungkan...';
+  
+  // Animation
   late AnimationController _animationController;
+  
+  // Subscriptions
+  StreamSubscription? _audioSubscription;
+  StreamSubscription? _wsSubscription;
 
   @override
   void initState() {
     super.initState();
+    _setupAnimation();
+    _initializeCall();
+  }
+
+  void _setupAnimation() {
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-    
-    Future.delayed(const Duration(seconds: 2), () {
+  }
+
+  Future<void> _initializeCall() async {
+    try {
+      // 1. Initialize Player
+      await _player.openPlayer();
+      
+      // 2. Connect WebSocket
+      setState(() => _statusMessage = 'Menghubungkan ke server...');
+      await _wsService.connectVoiceCall();
+      
+      // 3. Initialize Mic & Start Recording
+      setState(() => _statusMessage = 'Menyiapkan microphone...');
+      final hasPermission = await _audioService.initialize();
+      
+      if (!hasPermission) {
+        _showErrorAndExit('Permission microphone ditolak');
+        return;
+      }
+
+      // Start audio stream
+      await _startAudioStream();
+      
+      // 4. Listen to Backend Responses
+      _wsSubscription = _wsService.messages.listen(_handleBackendResponse);
+
       if (mounted) {
         setState(() {
           _isConnecting = false;
           _isCallActive = true;
+          _statusMessage = 'Silahkan berbicara';
         });
       }
-    });
+    } catch (e) {
+      debugPrint('Error initializing call: $e');
+      _showErrorAndExit('Gagal menghubungkan panggilan: $e');
+    }
+  }
+
+  Future<void> _startAudioStream() async {
+    final stream = await _audioService.startRecording();
+    if (stream != null) {
+      _audioSubscription = stream.listen((audioData) {
+        if (!_isMuted && _isCallActive) {
+          _wsService.sendAudio(audioData);
+          
+          // Animate UI based on volume (simulated for now)
+          if (audioData.length > 100) { // Simple noise gate simulation
+             // In real app, calculate RMS/Amplitude here
+          }
+        }
+      });
+    }
+  }
+
+  void _handleBackendResponse(Map<String, dynamic> message) {
+    try {
+      // Handle Voice Response (JSON with base64 audio)
+      if (message['type'] == 'voice_response') {
+        final response = VoiceResponse.fromJson(message);
+        
+        // Update UI with transcript if available
+        if (response.transcript.isNotEmpty) {
+           // Optional: Show transcript toast or subtitle
+        }
+
+        // Play Audio Response
+        if (response.audioBase64.isNotEmpty) {
+           _playAudio(response.audioBytes);
+           setState(() => _statusMessage = 'Ai sedang berbicara...');
+        }
+      }
+      
+      // Handle Text Response (Fallback)
+      if (message['type'] == 'text_response') {
+        // AI replied with text only
+      }
+      
+    } catch (e) {
+      debugPrint('Error handling response: $e');
+    }
+  }
+
+  Future<void> _playAudio(List<int> bytes) async {
+    // Stop recording while AI speaks (to apply echo cancellation logic manually if needed)
+    // For now we keep recording (full duplex)
+    
+    // Play using flutter_sound
+    if (_player.isPlaying) {
+      await _player.stopPlayer();
+    }
+    
+    await _player.startPlayer(
+      fromDataBuffer: Uint8List.fromList(bytes),
+      whenFinished: () {
+        if (mounted) {
+           setState(() => _statusMessage = 'Silahkan berbicara');
+        }
+      },
+    );
   }
 
   @override
   void dispose() {
+    _cleanup();
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _cleanup() async {
+    await _audioSubscription?.cancel();
+    await _audioService.stopRecording();
+    await _wsService.disconnect();
+    
+    // Dispose services
+    _audioService.dispose();
+    // _player.closePlayer(); // Careful passing context after dispose
+    if (_player.isOpen()) {
+       await _player.closePlayer();
+    }
+  }
+
+  void _showErrorAndExit(String message) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+    
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted && context.canPop()) {
+        context.pop();
+      }
+    });
   }
 
   @override
@@ -118,12 +261,11 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> with SingleTickerProv
                   const SizedBox(height: AppSpacing.sm),
                   
                   Text(
-                    _isConnecting
-                        ? 'Sedang menghubungkan...'
-                        : 'Silahkan berbicara',
+                    _statusMessage,
                     style: context.textStyles.bodyLarge?.copyWith(
                       color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   
                   if (_isCallActive) ...[
@@ -179,7 +321,11 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> with SingleTickerProv
                     context,
                     icon: _isSpeakerOn ? Icons.volume_up : Icons.volume_down,
                     label: 'Speaker',
-                    onTap: () => setState(() => _isSpeakerOn = !_isSpeakerOn),
+                    onTap: () async {
+                        // Toggle speaker logic (requires audio session config which is advanced)
+                        // For now just toggle UI state
+                        setState(() => _isSpeakerOn = !_isSpeakerOn);
+                    },
                     backgroundColor: _isSpeakerOn
                         ? theme.colorScheme.tertiary
                         : theme.colorScheme.onPrimary.withValues(alpha: 0.2),
@@ -261,6 +407,7 @@ class _VoiceCallScreenState extends State<VoiceCallScreen> with SingleTickerProv
           TextButton(
             onPressed: () {
               Navigator.pop(context);
+              _cleanup(); // Cleanup connection
               context.pop();
             },
             child: Text(

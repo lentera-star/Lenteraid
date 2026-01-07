@@ -3,7 +3,6 @@ import 'package:lentera/auth/auth_manager.dart';
 import 'package:lentera/supabase/supabase_config.dart';
 import 'package:lentera/models/user.dart' as app_user;
 import 'package:lentera/services/user_service.dart';
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseAuthManager extends AuthManager with EmailSignInManager {

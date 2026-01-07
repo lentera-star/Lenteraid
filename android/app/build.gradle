@@ -12,9 +12,11 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+
+
 android {
     namespace = "com.mycompany.CounterApp"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -52,6 +54,15 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.release
         }
+    }
+}
+
+// Force compatible AndroidX versions
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.activity:activity:1.8.2'
+        force 'androidx.activity:activity-ktx:1.8.2'
+        force 'androidx.activity:activity-compose:1.8.2'
     }
 }
 

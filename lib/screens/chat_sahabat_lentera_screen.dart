@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -97,7 +96,7 @@ class _ChatSahabatLenteraScreenState extends State<ChatSahabatLenteraScreen> {
             ),
             callback: (payload) {
               try {
-                final rec = payload.newRecord as Map<String, dynamic>;
+                final rec = payload.newRecord;
                 final msg = model.Message.fromJson(rec);
                 if (mounted) {
                   setState(() => _messages.add(msg));

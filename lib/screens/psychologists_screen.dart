@@ -4,8 +4,6 @@ import 'package:lentera/components/psychologist_card.dart';
 import 'package:lentera/components/bottom_sheet_booking.dart';
 import 'package:lentera/models/psychologist.dart';
 import 'package:lentera/services/psychologist_service.dart';
-import 'package:lentera/services/booking_service.dart';
-import 'package:lentera/models/booking.dart';
 import 'package:lentera/screens/payment_methods_screen.dart';
 import 'package:lentera/nav.dart';
 import 'package:lentera/theme.dart';

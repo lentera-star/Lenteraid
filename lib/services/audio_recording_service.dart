@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
@@ -32,7 +31,7 @@ class AudioRecordingService {
       // Configure recording parameters for Whisper
       // Whisper works best with 16kHz, 16-bit, Mono audio
       const config = RecordConfig(
-        encoder: AudioEncoder.pcm16bit,
+        encoder: AudioEncoder.pcm16bits,
         sampleRate: 16000,
         numChannels: 1,
       );

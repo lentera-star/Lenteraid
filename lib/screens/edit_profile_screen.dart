@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lentera/auth/supabase_auth_manager.dart';
-import 'package:lentera/models/user.dart' as app_user;
 import 'package:lentera/services/user_service.dart';
 import 'package:lentera/supabase/supabase_config.dart';
 import 'package:lentera/theme.dart';
@@ -133,7 +132,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final theme = Theme.of(context);
     final branding = theme.extension<BrandingColors>() ?? BrandingColors.light;
 
-    Future<void> _openAvatarShop() async {
+    Future<void> openAvatarShop() async {
       await context.push('/avatar-shop');
       await _load();
     }
@@ -158,7 +157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             right: 4,
             bottom: 4,
             child: GestureDetector(
-              onTap: _openAvatarShop,
+              onTap: openAvatarShop,
               child: Container(
                 width: 36,
                 height: 36,

@@ -623,7 +623,7 @@ class _ExpiryFormatter extends TextInputFormatter {
     final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
     var text = digits;
     if (text.length > 2) {
-      text = text.substring(0, 2) + '/' + text.substring(2, text.length > 4 ? 4 : text.length);
+      text = '${text.substring(0, 2)}/${text.substring(2, text.length > 4 ? 4 : text.length)}';
     }
     return TextEditingValue(
       text: text,

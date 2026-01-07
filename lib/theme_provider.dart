@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart';
 
 /// Provides app-wide theme mode with persistence.
 class ThemeProvider extends ChangeNotifier {

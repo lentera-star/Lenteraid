@@ -38,9 +38,9 @@ class AIService {
   Future<MoodAnalysisResponse> analyzeMood(MoodEntry moodEntry) async {
     try {
       final response = await _apiClient.analyzeMood(
-        moodRating: moodEntry.rating,
-        emotions: moodEntry.emotions,
-        journal: moodEntry.description,
+        moodRating: moodEntry.moodRating,
+        emotions: moodEntry.moodTags,
+        journal: moodEntry.journalText,
       );
       
       return MoodAnalysisResponse.fromJson(response);

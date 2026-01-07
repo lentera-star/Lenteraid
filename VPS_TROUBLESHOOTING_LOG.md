@@ -159,6 +159,7 @@ Response: 200 OK
 ## Next Steps
 
 ### Immediate
+- [ ] Try VNC Console again (since panel access is confirmed)
 - [ ] Submit support ticket to Contabo
 - [ ] Wait for support response (2-24 hours)
 

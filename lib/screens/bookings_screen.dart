@@ -666,7 +666,7 @@ class _BookingCard extends StatelessWidget {
   static String _formatTimeRange(DateTime start, DateTime end) {
     String hhmm(DateTime x) => '${x.hour.toString().padLeft(2, '0')}:${x.minute.toString().padLeft(2, '0')}';
     final minutes = end.difference(start).inMinutes;
-    return '${hhmm(start)} - ${hhmm(end)} WIB (${minutes} menit)';
+    return '${hhmm(start)} - ${hhmm(end)} WIB ($minutes menit)';
   }
 
   static String _rupiah(int amount) {

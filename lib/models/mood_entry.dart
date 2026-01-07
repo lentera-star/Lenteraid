@@ -20,7 +20,7 @@ class MoodEntry {
   });
 
   factory MoodEntry.fromJson(Map<String, dynamic> json) {
-    T? _firstOfKeys<T>(List<String> keys) {
+    T? firstOfKeys<T>(List<String> keys) {
       for (final k in keys) {
         if (json.containsKey(k) && json[k] != null) {
           return json[k] as T?;
@@ -29,7 +29,7 @@ class MoodEntry {
       return null;
     }
 
-    int _parseInt(dynamic v, {int fallback = 3}) {
+    int parseInt(dynamic v, {int fallback = 3}) {
       if (v == null) return fallback;
       if (v is int) return v;
       if (v is num) return v.toInt();
@@ -40,7 +40,7 @@ class MoodEntry {
       return fallback;
     }
 
-    List<String> _parseStringList(dynamic v) {
+    List<String> parseStringList(dynamic v) {
       if (v == null) return <String>[];
       if (v is List) {
         return v.map((e) => e.toString()).toList();
@@ -52,22 +52,22 @@ class MoodEntry {
       return <String>[];
     }
 
-    final id = _firstOfKeys<String>(['id']) ?? '';
-    final userId = _firstOfKeys<String>(['user_id', 'userId']) ?? '';
-    final ratingRaw = _firstOfKeys<dynamic>(['mood_rating', 'rating', 'score']);
-    final moodRating = _parseInt(ratingRaw, fallback: 3);
-    final tagsRaw = _firstOfKeys<dynamic>(['mood_tags', 'tags', 'labels']);
-    final moodTags = _parseStringList(tagsRaw);
-    final journalText = _firstOfKeys<String>([
+    final id = firstOfKeys<String>(['id']) ?? '';
+    final userId = firstOfKeys<String>(['user_id', 'userId']) ?? '';
+    final ratingRaw = firstOfKeys<dynamic>(['mood_rating', 'rating', 'score']);
+    final moodRating = parseInt(ratingRaw, fallback: 3);
+    final tagsRaw = firstOfKeys<dynamic>(['mood_tags', 'tags', 'labels']);
+    final moodTags = parseStringList(tagsRaw);
+    final journalText = firstOfKeys<String>([
       'journal_text',
       'journal',
       'note',
       'notes',
       'description',
     ]);
-    final audioUrl = _firstOfKeys<String>(['audio_url', 'audioUrl']);
-    final transcription = _firstOfKeys<String>(['transcription']);
-    final createdAtRaw = _firstOfKeys<dynamic>(['created_at', 'createdAt', 'created']);
+    final audioUrl = firstOfKeys<String>(['audio_url', 'audioUrl']);
+    final transcription = firstOfKeys<String>(['transcription']);
+    final createdAtRaw = firstOfKeys<dynamic>(['created_at', 'createdAt', 'created']);
     final createdAt = (createdAtRaw is DateTime
             ? createdAtRaw
             : (createdAtRaw is String

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -145,12 +144,12 @@ class _TriLoopPainter extends CustomPainter {
     final stroke = math.min(size.shortestSide * 0.12, 28.0);
     final radius = Radius.circular(h / 2);
 
-    RRect _stadiumRect() {
+    RRect stadiumRect() {
       final rect = Rect.fromCenter(center: center, width: w, height: h);
       return RRect.fromRectAndRadius(rect, radius);
     }
 
-    final base = _stadiumRect();
+    final base = stadiumRect();
 
     Paint mk(Color c, double a) => Paint()
       ..style = PaintingStyle.stroke

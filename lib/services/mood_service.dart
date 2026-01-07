@@ -70,7 +70,7 @@ class MoodService {
           .maybeSingle();
       final data = await query;
       if (data == null) return null;
-      final entry = MoodEntry.fromJson(data as Map<String, dynamic>);
+      final entry = MoodEntry.fromJson(data);
       debugPrint('[MoodService] Found entry id=${entry.id} createdAt=${entry.createdAt.toIso8601String()}');
       return entry;
     } catch (e) {
@@ -97,8 +97,8 @@ class MoodService {
           .insert(primary)
           .select()
           .limit(1);
-      if (res is List && res.isNotEmpty) {
-        return MoodEntry.fromJson(res.first as Map<String, dynamic>);
+      if (res.isNotEmpty) {
+        return MoodEntry.fromJson(res.first);
       }
     } on PostgrestException catch (e) {
       debugPrint('saveMoodEntry primary insert failed: ${e.message}');
@@ -127,9 +127,9 @@ class MoodService {
                 .insert(map)
                 .select()
                 .limit(1);
-            if (res is List && res.isNotEmpty) {
+            if (res.isNotEmpty) {
               debugPrint('saveMoodEntry succeeded with columns: r=$r, t=$t, j=$j');
-              return MoodEntry.fromJson(res.first as Map<String, dynamic>);
+              return MoodEntry.fromJson(res.first);
             }
           } on PostgrestException catch (e) {
             // Only continue on column-not-found errors; break on others (e.g., RLS)

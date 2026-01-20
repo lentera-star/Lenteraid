@@ -1,0 +1,119 @@
+# LENTERA Fine-Tuning Configuration (Axolotl)
+# Optimized for mental health AI with ethics compliance
+
+base_model: meta-llama/Llama-2-7b-hf
+model_type: LlamaForCausalLM
+tokenizer_type: LlamaTokenizer
+
+# Load in 4-bit for efficiency (QLoRA)
+load_in_4bit: true
+strict: false
+
+# LoRA Configuration (Efficient Fine-tuning)
+adapter: lora
+lora_model_dir:
+lora_r: 16           # Rank - higher = more capacity but slower
+lora_alpha: 32       # Scaling factor (usually 2x rank)
+lora_dropout: 0.05   # Prevent overfitting
+lora_target_modules:
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+  - gate_proj
+  - down_proj
+  - up_proj
+
+lora_target_linear: true
+lora_fan_in_fan_out:
+
+# Dataset
+datasets:
+  - path: train.jsonl
+    type: sharegpt      # Chat format
+    conversation: chatml
+    
+val_set_size: 0.1    # 10% for validation
+dataset_prepared_path:
+
+# Tokenization
+sequence_len: 2048   # Max context length
+sample_packing: false
+pad_to_sequence_len: true
+
+# Training Hyperparameters
+micro_batch_size: 2          # Batch per GPU
+gradient_accumulation_steps: 8   # Effective batch = 2 * 8 = 16
+num_epochs: 3
+learning_rate: 0.0002
+lr_scheduler: cosine
+warmup_steps: 100
+
+# Optimizer
+optimizer: adamw_torch
+weight_decay: 0.01
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_epsilon: 1.0e-8
+
+# Mixed Precision Training
+bf16: auto   # Use BF16 if available, else FP16
+fp16: auto
+tf32: false
+
+# Gradient Settings
+gradient_checkpointing: true
+max_grad_norm: 1.0
+
+# Logging & Checkpointing
+output_dir: ./lentera-lora-output
+hub_model_id:   # Optional: Upload to HuggingFace
+hub_strategy: end
+
+logging_steps: 10
+save_strategy: steps
+save_steps: 100
+save_total_limit: 3   # Keep only 3 best checkpoints
+
+# Evaluation
+eval_steps: 50
+eval_table_size: 10
+eval_sample_packing: false
+evaluation_strategy: steps
+
+# Weights & Biases Logging (Optional but Recommended)
+wandb_project: lentera-mental-health
+wandb_entity:
+wandb_watch: gradients
+wandb_name: lentera-llama2-lora-v1
+wandb_log_model: checkpoint
+
+# Special Tokens
+special_tokens:
+  bos_token: "<s>"
+  eos_token: "</s>"
+  unk_token: "<unk>"
+  pad_token: "[PAD]"
+
+# Training Optimizations
+flash_attention: true
+sample_packing: false
+pad_to_sequence_len: true
+
+# Early Stopping (Optional)
+early_stopping_patience: 3
+
+# Dataset Preprocessing
+chat_template: chatml
+datasets_text_field: text
+
+# Resume from checkpoint
+resume_from_checkpoint:
+auto_resume_from_checkpoints: true
+
+# Miscellaneous
+seed: 42
+local_rank:
+ddp_timeout: 1800
+fsdp:
+fsdp_config:

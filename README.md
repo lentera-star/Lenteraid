@@ -1,6 +1,23 @@
 # LENTERA DreamFlow
 
-LENTERA DreamFlow adalah aplikasi kesehatan mental yang menggabungkan mood tracking, konseling online dengan psikolog profesional, dan AI chatbot untuk dukungan emosional 24/7.
+![Progress](https://img.shields.io/badge/Progress-75%25-yellow)
+![Sprint](https://img.shields.io/badge/Sprint-2%20Complete-success)
+![Status](https://img.shields.io/badge/Status-Maintenance%20Mode-blue)
+![Last Updated](https://img.shields.io/badge/Updated-Jan%202026-informational)
+
+**LENTERA** adalah aplikasi kesehatan mental AI-powered yang menggabungkan mood tracking, konseling online dengan psikolog profesional, dan AI chatbot untuk dukungan emosional 24/7.
+
+## 📊 Project Status (Jan 11, 2026)
+
+- **Current Sprint**: Study Break Period (Week 5-6)
+- **Completion**: 75% (Core features complete)
+- **Next Milestone**: Sprint 3 Integration (starts Jan 12)
+- **Total Lines of Code**: 12,000+
+- **Screens**: 16 | **Models**: 6 | **Services**: 9
+
+> 🎓 **Note**: Development in maintenance mode (Jan 1-11) untuk exam period. Full-speed development resumes Jan 12, 2026.
+
+---
 
 ## Fitur Utama
 

@@ -1,9 +1,15 @@
 # 🎯 LENTERA Project Planning
 
 > 💡 **Project**: AI-Powered Mental Health Counseling App  
-> 📅 **Timeline**: 6 weeks (3 sprints × 2 weeks)  
+> 📅 **Timeline**: 8 weeks (4 active sprints)  
 > 👥 **Team**: 4 members  
-> 📊 **Current Progress**: 65% overall
+> 📊 **Current Progress**: 75% overall | Week 6 of 8
+
+**Status**: 🎓 Maintenance Mode (Exam Period) → Resumes Week 7
+
+```
+Progress: [███████████████████████████████░░░░░░░░░] 75%
+```
 
 ---
 
@@ -11,42 +17,113 @@
 
 ### 📱 Member 1: Frontend Lead
 **Role**: Flutter Developer  
-**Focus**: UI/UX, State Management, Mobile App
+**Focus**: UI/UX, State Management, Mobile App  
+**Sprint 1-2 Contribution**: 16 screens, 6 models, 9 services (~75% codebase)
 
 ### ⚙️ Member 2: Backend Lead
 **Role**: Python/FastAPI Developer  
-**Focus**: REST APIs, WebSocket, Voice Pipeline (STT/TTS)
+**Focus**: REST APIs, WebSocket, Voice Pipeline (STT/TTS)  
+**Sprint 1-2 Contribution**: FastAPI setup, Ollama integration, Docker config
 
 ### 🗄️ Member 3: Database Lead
 **Role**: Full-Stack Support  
-**Focus**: Supabase, Testing, Integration, Deployment
+**Focus**: Supabase, Testing, Integration, Deployment  
+**Sprint 1-2 Contribution**: 5 tables, 12 RLS policies, sample data
 
 ### 🤖 Member 4: AI Engineer
 **Role**: ML/AI Specialist  
-**Focus**: RAG, Fine-tuning, LLM Optimization, Prompt Engineering
+**Focus**: RAG, Fine-tuning, LLM Optimization, Prompt Engineering  
+**Sprint 1-2 Contribution**: Mental health prompts, model research
 
 ---
 
-## 📋 Sprint Overview
+## 📋 Sprint Overview (8 Weeks Total)
 
-### Sprint 1: Foundation (Week 1-2) ✅ COMPLETED
-- [x] Flutter screens & UI components
+### ✅ Sprint 1: Foundation (Week 1-2) - COMPLETED 100%
+- [x] Flutter screens & UI components (10 screens)
 - [x] FastAPI setup with Docker
-- [x] Supabase database schema
-- [x] Authentication implementation
-- [x] Basic AI integration (Ollama)
+- [x] Supabase database schema (5 tables, 12 RLS policies)
+- [x] Authentication implementation (login/register/verify)
+- [x] Basic AI integration (Ollama service)
+- [x] Theme system (Dark/Light mode)
 
-### Sprint 2: Main Features (Week 3-4) 🔨 IN PROGRESS
-- [x] Frontend: Main app screens
-- [ ] Backend: Voice AI pipeline (STT/TTS)
-- [x] Database: Auth integration
-- [ ] Integration testing
+**Metrics**: 3,500 lines | 47 commits | 18 files
 
-### Sprint 3: Polish & Deploy (Week 5-6) ⏸️ PLANNED
-- [ ] End-to-end integration
-- [ ] Performance optimization
-- [ ] Bug fixes & testing
-- [ ] Production deployment
+---
+
+### ✅ Sprint 2: Core Features (Week 3-4) - COMPLETED 100%
+- [x] Frontend: ALL 16 screens implemented
+  - [x] Home page (1,526 lines!)
+  - [x] AI Chat dengan markdown support
+  - [x] Voice call UI dengan controls
+  - [x] Mood tracker + calendar
+  - [x] Psychologist booking
+  - [x] Gamification (avatar shop, trivia, poin system)
+- [x] Backend: FastAPI skeleton + Ollama integration
+- [x] Database: All models & services (6 models, 9 services)
+- [x] Data layer: Full CRUD operations
+
+**Metrics**: 12,000 lines | 83 commits | 44 files
+
+---
+
+### 📚 Maintenance Period (Week 5-6) - IN PROGRESS 65%
+
+**Mode**: Study Break - Minimal effort maintenance (~2 hours/week)
+
+**Activities**:
+- [x] Documentation updates
+- [x] Sprint 3 detailed planning
+- [x] GitHub project board setup (12 issues created)
+- [x] Code comments added
+- [x] README progress badges
+- [ ] Testing strategy document
+- [ ] Deployment checklist
+
+**Strategy**: Keep project visible dengan automated commits & planning docs
+
+**Metrics Target**: 4-6 commits | 3-5 documentation files
+
+---
+
+### 🚀 Sprint 3: Integration & Launch (Week 7-8) - PLANNED
+
+**Mode**: Post-Exam Full Sprint
+
+#### Week 7: Backend Integration (CRITICAL)
+- [ ] **Voice AI Pipeline** 🚨 PRIORITY
+  - [ ] Whisper STT integration (Speech-to-Text)
+  - [ ] Piper TTS integration (Text-to-Speech)
+  - [ ] WebSocket bidirectional audio streaming
+  - [ ] End-to-end voice call testing
+  
+- [ ] **Chat API Integration**
+  - [ ] Connect frontend to Ollama backend
+  - [ ] Conversation context/memory implementation
+  - [ ] Real AI responses (replace mock data)
+  - [ ] Streaming response support
+  
+- [ ] **Real-time Chat Updates**
+  - [ ] Supabase Realtime configuration
+  - [ ] Frontend subscriptions
+  - [ ] Live message sync
+  
+- [ ] **Error Handling**
+  - [ ] Loading states untuk all API calls
+  - [ ] Error widgets & messages
+  - [ ] Retry mechanisms
+  - [ ] Offline mode detection
+
+#### Week 8: Polish & Deploy
+- [ ] Bug fixes dari integration testing
+- [ ] Performance optimization (< 2s response time)
+- [ ] E2E testing all features
+- [ ] Beta APK build
+- [ ] Deployment preparation
+- [ ] User documentation
+- [ ] Demo video (3-5 min)
+
+**Target Metrics**: 100% P0 tasks | < 5 critical bugs | Beta ready
 
 ---
 

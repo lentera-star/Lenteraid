@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Dict
 import random
 
-INPUT_FILE = Path(__file__).parent / "dataset_lentera_enhanced.json"
+INPUT_FILE = Path(__file__).parent / "dataset_combined.json"
 OUTPUT_TRAIN = Path(__file__).parent / "train.jsonl"
 OUTPUT_VAL = Path(__file__).parent / "val.jsonl"
 

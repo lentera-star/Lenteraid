@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lentera/models/conversation.dart' as model;
 import 'package:lentera/nav.dart';
+import 'package:lentera/services/ai_service.dart';
 import 'package:lentera/supabase/supabase_config.dart';
 import 'package:lentera/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,9 +21,11 @@ class ChatSahabatLenteraScreen extends StatefulWidget {
 class _ChatSahabatLenteraScreenState extends State<ChatSahabatLenteraScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<model.Message> _messages = [];
+  final AIService _aiService = AIService();
   RealtimeChannel? _channel;
   String? _conversationId;
   bool _loading = true;
+  bool _isSending = false;
 
   @override
   void initState() {
@@ -52,7 +55,7 @@ class _ChatSahabatLenteraScreenState extends State<ChatSahabatLenteraScreen> {
         'conversations',
         filters: {
           'user_id': uid,
-          'title': 'Sahabat Lentera',
+          'title': 'Sahabat Lentera AI Test',
         },
         limit: 1,
       );
@@ -63,7 +66,7 @@ class _ChatSahabatLenteraScreenState extends State<ChatSahabatLenteraScreen> {
       } else {
         final created = await SupabaseService.insert('conversations', {
           'user_id': uid,
-          'title': 'Sahabat Lentera',
+          'title': 'Sahabat Lentera AI Test',
           'updated_at': DateTime.now().toIso8601String(),
         });
         convo = created.first;
@@ -118,17 +121,22 @@ class _ChatSahabatLenteraScreenState extends State<ChatSahabatLenteraScreen> {
 
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
-    if (text.isEmpty || _conversationId == null) return;
+    if (text.isEmpty || _conversationId == null || _isSending) return;
     _controller.clear();
 
+    setState(() => _isSending = true);
+
     try {
-      final data = {
+      final uid = SupabaseConfig.auth.currentUser?.id;
+      
+      // 1) Save User Message to Supabase
+      final userData = {
         'conversation_id': _conversationId,
         'role': 'user',
         'content': text,
         'created_at': DateTime.now().toIso8601String(),
       };
-      await SupabaseService.insert('messages', data);
+      await SupabaseService.insert('messages', userData);
 
       // Update conversation timestamp
       await SupabaseService.update('conversations', {
@@ -136,12 +144,33 @@ class _ChatSahabatLenteraScreenState extends State<ChatSahabatLenteraScreen> {
       }, filters: {
         'id': _conversationId,
       });
+
+      // 2) Call AI Backend
+      final aiResponse = await _aiService.sendMessage(
+        message: text,
+        userId: uid,
+        conversationId: _conversationId,
+      );
+
+      // 3) Save AI Response to Supabase
+      final aiData = {
+        'conversation_id': _conversationId,
+        'role': 'assistant',
+        'content': aiResponse.message,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      await SupabaseService.insert('messages', aiData);
+
     } catch (e) {
-      debugPrint('Error sending message: $e');
+      debugPrint('Error in chat flow: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengirim pesan: $e')),
+          SnackBar(content: Text('Koneksi terputus: $e')),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
       }
     }
   }
@@ -200,8 +229,11 @@ class _ChatSahabatLenteraScreenState extends State<ChatSahabatLenteraScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    itemCount: _messages.length,
+                    itemCount: _messages.length + (_isSending ? 1 : 0),
                     itemBuilder: (context, index) {
+                      if (index == _messages.length) {
+                        return const _TypingIndicator();
+                      }
                       final msg = _messages[index];
                       final isUser = msg.role == 'user';
                       return _ChatRow(
@@ -346,6 +378,58 @@ class _InputBar extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _TypingIndicator extends StatelessWidget {
+  const _TypingIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final chatColors = theme.extension<ChatColors>() ?? ChatColors.light;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: chatColors.slateBlue.withValues(alpha: 0.1),
+            child: Icon(Icons.emoji_objects, color: chatColors.slateBlue, size: 18),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: chatColors.incomingBg,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(6),
+                topRight: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
+              border: Border.all(color: chatColors.incomingBorder),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(3, (index) {
+                return Container(
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: chatColors.incomingFg.withValues(alpha: 0.4),
+                    shape: BoxShape.circle,
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
       ),
     );
   }

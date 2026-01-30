@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Configuration for API endpoints
 class ApiConfig {
@@ -15,14 +16,14 @@ class ApiConfig {
     'BACKEND_URL',
     defaultValue: _useLocal
         ? 'http://localhost:8000'  // Local backend (when USE_LOCAL=true)
-        : 'http://$vpsIp:8000',     // VPS backend (default)
+        : 'http://$vpsIp:8000',     // VPS backend (port 8000)
   );
   
   static const String wsUrl = String.fromEnvironment(
     'WS_URL',
     defaultValue: _useLocal
         ? 'ws://localhost:8000'     // Local WebSocket
-        : 'ws://$vpsIp:8000',       // VPS WebSocket (default)
+        : 'ws://$vpsIp:8000',       // VPS WebSocket (port 8000)
   );
   
   // API endpoints
@@ -47,34 +48,55 @@ class ApiClient {
   
   /// Send chat message to AI backend
   /// 
-  /// Returns AI response or throws exception
+  /// Sends a chat message to the AI backend.
+  /// Uses Supabase Edge Function proxy in production to avoid CORS issues.
   Future<Map<String, dynamic>> sendChatMessage({
     required String message,
     String? userId,
     String? conversationId,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl${ApiConfig.chatEndpoint}');
-      
-      final response = await _client.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'message': message,
-          'user_id': userId,
-          'conversation_id': conversationId,
-        }),
-      );
-      
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      } else {
-        throw ApiException(
-          'Chat request failed with status ${response.statusCode}',
-          statusCode: response.statusCode,
+      if (!ApiConfig._useLocal) {
+        // Production: Use Supabase Edge Function Proxy
+        final response = await Supabase.instance.client.functions.invoke(
+          'proxy_ai',
+          body: {
+            'endpoint': ApiConfig.chatEndpoint,
+            'message': message,
+            'user_id': userId,
+            'conversation_id': conversationId,
+          },
         );
+
+        if (response.status != null && response.status! >= 200 && response.status! < 300) {
+          return response.data as Map<String, dynamic>;
+        } else {
+          throw ApiException(
+            'Chat proxy request failed with status ${response.status}',
+            statusCode: response.status ?? 500,
+          );
+        }
+      } else {
+        // Local: Call endpoint directly
+        final url = Uri.parse('$baseUrl${ApiConfig.chatEndpoint}');
+        final response = await _client.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'message': message,
+            'user_id': userId,
+            'conversation_id': conversationId,
+          }),
+        );
+        
+        if (response.statusCode == 200) {
+          return jsonDecode(response.body) as Map<String, dynamic>;
+        } else {
+          throw ApiException(
+            'Chat request failed with status ${response.statusCode}',
+            statusCode: response.statusCode,
+          );
+        }
       }
     } catch (e) {
       debugPrint('Error sending chat message: $e');
@@ -91,27 +113,50 @@ class ApiClient {
     String? journal,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl${ApiConfig.moodAnalysisEndpoint}');
-      
-      final response = await _client.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'mood_rating': moodRating,
-          'emotions': emotions,
-          'journal': journal ?? '',
-        }),
-      );
-      
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body) as Map<String, dynamic>;
-      } else {
-        throw ApiException(
-          'Mood analysis failed with status ${response.statusCode}',
-          statusCode: response.statusCode,
+      if (!ApiConfig._useLocal) {
+        // Production: Use Supabase Edge Function Proxy
+        final response = await Supabase.instance.client.functions.invoke(
+          'proxy_ai',
+          body: {
+            'endpoint': ApiConfig.moodAnalysisEndpoint,
+            'mood_rating': moodRating,
+            'emotions': emotions,
+            'journal': journal,
+          },
         );
+
+        if (response.status != null && response.status! >= 200 && response.status! < 300) {
+          return response.data as Map<String, dynamic>;
+        } else {
+          throw ApiException(
+            'Mood analysis proxy request failed with status ${response.status}',
+            statusCode: response.status ?? 500,
+          );
+        }
+      } else {
+        // Local: Call endpoint directly
+        final url = Uri.parse('$baseUrl${ApiConfig.moodAnalysisEndpoint}');
+        
+        final response = await _client.post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'mood_rating': moodRating,
+            'emotions': emotions,
+            'journal': journal,
+          }),
+        );
+        
+        if (response.statusCode == 200) {
+          return jsonDecode(response.body) as Map<String, dynamic>;
+        } else {
+          throw ApiException(
+            'Mood analysis failed with status ${response.statusCode}',
+            statusCode: response.statusCode,
+          );
+        }
       }
     } catch (e) {
       debugPrint('Error analyzing mood: $e');

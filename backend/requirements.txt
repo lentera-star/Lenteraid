@@ -1,15 +1,31 @@
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-websockets==12.0
-pydantic==2.5.3
-python-multipart==0.0.6
-httpx==0.26.0
-# Ollama client
-ollama==0.1.6
-# Audio processing (lighter alternatives)
-numpy==1.24.3
-pydub==0.25.1
-# Optional: untuk Whisper dan TTS (commented, install jika diperlukan)
-# faster-whisper==0.10.0
-# coqui-tts==0.22.0
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+websockets>=12.0
+pydantic>=2.5.3
+python-multipart>=0.0.6
+httpx>=0.25.2,<0.26.0
 
+# Environment variables
+python-dotenv>=1.0.0
+
+# Ollama client
+ollama>=0.1.6
+
+# OpenAI (for fine-tuned models)
+openai>=1.12.0
+
+# Audio processing
+numpy>=1.26.0
+pydub>=0.25.1
+soundfile>=0.12.1
+
+# Whisper STT (CPU optimized)
+faster-whisper>=0.10.0
+
+# TTS - SpeechT5 Indonesian
+transformers>=4.38.0
+torch>=2.2.0
+sentencepiece>=0.1.99
+
+# Async support
+aiofiles>=23.2.1

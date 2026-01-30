@@ -17,6 +17,9 @@ import 'package:lentera/screens/splash_screen.dart';
 import 'package:lentera/screens/chat_sahabat_lentera_screen.dart';
 import 'package:lentera/screens/edit_profile_screen.dart';
 import 'package:lentera/screens/avatar_shop_screen.dart';
+import 'package:lentera/screens/ai_test_screen.dart';
+import 'package:lentera/screens/forgot_password_screen.dart';
+import 'package:lentera/screens/reset_password_screen.dart';
 
 /// GoRouter configuration for app navigation
 ///
@@ -37,7 +40,9 @@ class AppRouter {
     redirect: (context, state) {
       final isLoggedIn = SupabaseConfig.auth.currentUser != null;
       final isLoginRoute = state.matchedLocation == AppRoutes.login || 
-                          state.matchedLocation == AppRoutes.signup;
+                          state.matchedLocation == AppRoutes.signup ||
+                          state.matchedLocation == AppRoutes.forgotPassword ||
+                          state.matchedLocation == AppRoutes.resetPassword;
       final isSplashRoute = state.matchedLocation == AppRoutes.splash;
       
       // Allow splash to always show and handle its own navigation timing
@@ -71,6 +76,20 @@ class AppRouter {
         name: 'signup',
         pageBuilder: (context, state) => MaterialPage(
           child: const SignupScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        name: 'forgot-password',
+        pageBuilder: (context, state) => MaterialPage(
+          child: const ForgotPasswordScreen(),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        name: 'reset-password',
+        pageBuilder: (context, state) => MaterialPage(
+          child: const ResetPasswordScreen(),
         ),
       ),
       GoRoute(
@@ -177,6 +196,13 @@ class AppRouter {
           child: const EditProfileScreen(),
         ),
       ),
+      GoRoute(
+        path: AppRoutes.aiTest,
+        name: 'ai-test',
+        pageBuilder: (context, state) => MaterialPage(
+          child: const AITestScreen(),
+        ),
+      ),
     ],
   );
 }
@@ -200,4 +226,7 @@ class AppRoutes {
   static const String chatSahabat = '/chat-sahabat-lentera';
   static const String editProfile = '/edit-profile';
   static const String avatarShop = '/avatar-shop';
+  static const String aiTest = '/ai-test';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
 }

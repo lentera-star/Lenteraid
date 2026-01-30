@@ -1,36 +1,58 @@
-# =================================================
-# LENTERA – OPTIMIZED CONFIG FOR RUNPOD/GPU
-# =================================================
-
+# ===============================
+# MODEL
+# ===============================
 base_model: unsloth/Meta-Llama-3.1-8B
 model_type: LlamaForCausalLM
 tokenizer_type: AutoTokenizer
 
-# Chat format untuk Llama 3.1
-chat_template: llama3
-
-# Jangan strict, biar metadata di jsonl diabaikan
+# ===============================
+# CHAT TEMPLATE
+# ===============================
+chat_template: chatml
 strict: false
 
-# 4bit untuk efisiensi
+# ===============================
+# QLORA 4-BIT
+# ===============================
 load_in_4bit: true
+bnb_4bit_compute_dtype: bfloat16
+bnb_4bit_quant_type: nf4
+bnb_4bit_use_double_quant: true
 
-# =====================
-# DATASET (CHAT JSONL)
-# =====================
+# ===============================
+# DATASET
+# ===============================
 datasets:
-  - path: train.jsonl
-    type: chat
+  - path: /workspace/train_chatml.jsonl
+    type: chat_template
     split: train
+    field_messages: messages
+    field_role: role
+    field_content: content
 
 eval_dataset:
-  - path: val.jsonl
-    type: chat
-    split: eval
+  path: /workspace/val_chatml.jsonl
+  type: chat_template
+  split: train
+  field_messages: messages
+  field_role: role
+  field_content: content
 
-# =====================
-# LoRA (PARAMETER TUNING)
-# =====================
+# ===============================
+# TRAINING (ANTI OOM)
+# ===============================
+sequence_len: 2048
+sample_packing: false
+flash_attention: false
+
+micro_batch_size: 1
+gradient_accumulation_steps: 8
+num_epochs: 3
+learning_rate: 2e-4
+
+# ===============================
+# LORA
+# ===============================
 adapter: lora
 lora_r: 16
 lora_alpha: 32
@@ -40,56 +62,25 @@ lora_target_modules:
   - k_proj
   - v_proj
   - o_proj
-  - gate_proj
-  - down_proj
-  - up_proj
 
-# =====================
-# TRAINING PARAMETERS
-# =====================
-micro_batch_size: 2
-gradient_accumulation_steps: 8
-num_epochs: 3
-
-learning_rate: 2e-4
-lr_scheduler: cosine
-warmup_ratio: 0.03
-
-# PENTING: Jangan latih input user
-train_on_inputs: false
-
-# =====================
-# PERFORMANCE (GPU OPTIMIZED)
-# =====================
+# ===============================
+# PRECISION
+# ===============================
 bf16: true
+fp16: false
 tf32: true
 
-# Flash attention OFF (biar kompatibel semua GPU)
-flash_attention: false
-
-# Gradient checkpointing untuk hemat VRAM
+# ===============================
+# MEMORY SAVER
+# ===============================
 gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
 
-# =====================
-# OUTPUT & LOGGING
-# =====================
-output_dir: ./lentera-lora-output
-logging_steps: 10
-save_steps: 200
+# ===============================
+# OUTPUT
+# ===============================
+output_dir: /workspace/lentera-lora-out
+logging_steps: 1
+save_steps: 100
 save_total_limit: 2
-
-# Evaluation
-eval_steps: 100
-evaluation_strategy: steps
-
-# Seed untuk reproducibility
-seed: 42
-
-# =====================
-# SPECIAL TOKENS
-# =====================
-special_tokens:
-  bos_token: "<s>"
-  eos_token: "</s>"
-  unk_token: "<unk>"
-  pad_token: "[PAD]"

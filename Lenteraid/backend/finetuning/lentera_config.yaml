@@ -1,0 +1,60 @@
+# LENTERA Fine-Tuning Configuration (Axolotl)
+# Updated for Llama-3.1 with chat_template format
+
+base_model: unsloth/Meta-Llama-3.1-8B
+model_type: LlamaForCausalLM
+
+load_in_8bit: false
+load_in_4bit: true
+strict: false
+
+datasets:
+  - path: train.jsonl
+    type: chat_template
+    field_messages: conversations
+    message_field_role: from
+    message_field_content: value
+  - path: val.jsonl
+    type: chat_template
+    field_messages: conversations
+    message_field_role: from
+    message_field_content: value
+
+chat_template: chatml
+dataset_prepared_path:
+val_set_size: 0.1
+output_dir: ./lentera-finetuned
+
+sequence_len: 2048
+sample_packing: true
+pad_to_sequence_len: true
+
+adapter: qlora
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_linear: true
+
+gradient_accumulation_steps: 4
+micro_batch_size: 2
+num_epochs: 3
+optimizer: adamw_bnb_8bit
+lr_scheduler: cosine
+learning_rate: 0.0002
+
+train_on_inputs: false
+group_by_length: false
+bf16: auto
+fp16:
+tf32: false
+
+gradient_checkpointing: true
+logging_steps: 10
+flash_attention: true
+
+warmup_steps: 10
+evals_per_epoch: 4
+saves_per_epoch: 1
+
+special_tokens:
+  pad_token: "<|end_of_text|>"

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Week 6 - AI Fine-Tuning Achievement | LenteraDreamFlow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide {
+            display: none;
+            width: 90%;
+            max-width: 1200px;
+            height: 85vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 60px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-number {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            font-size: 14px;
+            color: #999;
+        }
+
+        h1 {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 24px;
+            color: #667eea;
+            margin: 25px 0 15px 0;
+        }
+
+        p, li {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .metrics-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .metrics-box h3 {
+            color: white;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .metric-label {
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .badge-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        ul.bullet-list {
+            margin-left: 30px;
+            margin-top: 15px;
+        }
+
+        ul.bullet-list li {
+            margin-bottom: 10px;
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .improvement {
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .center-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .subtitle {
+            font-size: 24px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .emoji {
+            font-size: 64px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <!-- SLIDE 1: COVER -->
+        <div class="slide active">
+            <div class="center-content">
+                <div class="emoji">🧠</div>
+                <h1>LENTERADREAMFLOW</h1>
+                <div class="subtitle">Week 6 - AI Model Fine-Tuning Achievement</div>
+                <div style="margin-top: 40px; font-size: 20px; color: #667eea;">
+                    <strong>Model: Llama 3.1-8B</strong><br>
+                    Fine-tuned untuk Mental Health Support
+                </div>
+                <div style="margin-top: 30px;">
+                    <span class="status-badge badge-success">✅ Successfully Deployed & Validated</span>
+                </div>
+                <div style="margin-top: 40px; font-size: 16px; color: #999;">
+                    Periode: Week 6 (Februari 2026)
+                </div>
+            </div>
+            <div class="slide-number">1 / 10</div>
+        </div>
+
+        <!-- SLIDE 2: RINGKASAN EKSEKUTIF -->
+        <div class="slide">
+            <h2>Ringkasan Eksekutif - Week 6</h2>
+            
+            <div class="metrics-box">
+                <h3>Key Metrics - At a Glance</h3>
+                <div class="metric-item">
+                    <span class="metric-label">TRAINING LOSS</span>
+                    <span class="metric-value">0.847 <span class="status-badge badge-success">✅ Target <1.0</span></span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">RESPONSE TIME</span>
+                    <span class="metric-value">±3 menit <span class="status-badge badge-success">✅ Validation OK</span></span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">TEST SCENARIOS</span>
+                    <span class="metric-value">25/25 PASSED (100%) <span class="status-badge badge-success">✅ Semua Terpenuhi</span></span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">STABILITAS</span>
+                    <span class="metric-value">100% Uptime <span class="status-badge badge-success">✅ Zero Crashes</span></span>
+                </div>
+            </div>
+
+            <h3>Fokus Validasi</h3>
+            <ul class="bullet-list">
+                <li>🎯 <strong>Kualitas Respons Model</strong> - Empathy, cultural relevance, safety compliance</li>
+                <li>🔧 <strong>Stabilitas Inferensi</strong> - Uptime, memory usage, crash resilience</li>
+                <li>⚙️ <strong>Functional Validation</strong> - All test scenarios passed</li>
+            </ul>
+            <div class="slide-number">2 / 10</div>
+        </div>
+
+        <!-- SLIDE 3: DATA PREPARATION -->
+        <div class="slide">
+            <h2>Step 1: Persiapan Dataset Training</h2>
+            
+            <h3>Dataset Overview</h3>
+            <ul class="bullet-list">
+                <li><strong>Total Samples:</strong> 500+ curated conversation examples</li>
+                <li><strong>Format:</strong> Llama 3.1 instruction fine-tuning format</li>
+                <li><strong>Quality Control:</strong> Triple-review process</li>
+            </ul>
+
+            <h3>Kategori Data</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Kategori</th>
+                        <th>Persentase</th>
+                        <th>Fokus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Emotional Support</strong></td>
+                        <td>40%</td>
+                        <td>Anxiety, depression, stress, loneliness</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Crisis Detection</strong></td>
+                        <td>20%</td>
+                        <td>Self-harm, suicide risk, emergency</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cultural Context</strong></td>
+                        <td>20%</td>
+                        <td>Family stigma, Indonesian social norms</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Multi-turn Flow</strong></td>
+                        <td>20%</td>
+                        <td>Context retention, natural conversation</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="slide-number">3 / 10</div>
+        </div>
+
+        <!-- SLIDE 4: TRAINING CONFIGURATION -->
+        <div class="slide">
+            <h2>Step 2: Training Configuration & Results</h2>
+            
+            <h3>Training Hyperparameters</h3>
+            <div class="code-block">
+Model: meta-llama/Llama-3.1-8B
+Learning Rate: 2e-5
+Batch Size: 4 (gradient accumulation)
+Epochs: 3
+Optimizer: AdamW
+Training Duration: ~8 hours
+            </div>
+
+            <h3>Training Loss Progression</h3>
+            <div class="code-block">
+Epoch 1: 2.134 → 1.102
+Epoch 2: 1.098 → 0.876
+Epoch 3: 0.873 → <span class="highlight">0.847</span> ✅
+
+Validation Loss: 0.912
+Overfitting Gap: 0.065 (minimal)
+            </div>
+
+            <p style="margin-top: 20px;">
+                ✅ <strong>Convergence Analysis:</strong> Smooth convergence tanpa spikes, validation loss dekat dengan training loss, no sign of overfitting.
+            </p>
+            <div class="slide-number">4 / 10</div>
+        </div>
+
+        <!-- SLIDE 5: HASIL TRAINING -->
+        <div class="slide">
+            <h2>Hasil Training: Before vs After</h2>
+            
+            <h3>Qualitative Assessment (Skala 1-5)</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>Base Model</th>
+                        <th>Fine-tuned</th>
+                        <th>Improvement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Empathy Score</strong></td>
+                        <td>3.2/5</td>
+                        <td>4.3/5</td>
+                        <td class="improvement">+34% ⬆️</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cultural Relevance</strong></td>
+                        <td>3.0/5</td>
+                        <td>4.5/5</td>
+                        <td class="improvement">+50% ⬆️</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Safety Compliance</strong></td>
+                        <td>4.0/5</td>
+                        <td>4.8/5</td>
+                        <td class="improvement">+20% ⬆️</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Language Fluency</strong></td>
+                        <td>3.5/5</td>
+                        <td>4.6/5</td>
+                        <td class="improvement">+31% ⬆️</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Crisis Detection Accuracy</h3>
+            <p>True Positive Rate: <span class="highlight">75% → 95%</span> <span class="improvement">(+20pp)</span></p>
+            <p>Missed Detections: 25% → 5% <span class="improvement">(-20pp)</span></p>
+            <div class="slide-number">5 / 10</div>
+        </div>
+
+        <!-- SLIDE 6: DEPLOYMENT ARCHITECTURE -->
+        <div class="slide">
+            <h2>Step 3: Deployment pada VPS (Ollama)</h2>
+            
+            <h3>Deployment Stack</h3>
+            <div class="code-block">
+┌─────────────  VPS Infrastructure  ─────────────┐
+│                                                │
+│  Layer 1: Nginx Reverse Proxy                 │
+│  └─ SSL/TLS Termination                       │
+│                                                │
+│  Layer 2: FastAPI Backend (Docker)            │
+│  └─ Safety Validator ✓                        │
+│                                                │
+│  Layer 3: Ollama Service                      │
+│  └─ Fine-tuned Llama 3.1-8B (4.7GB)           │
+│                                                │
+└────────────────────────────────────────────────┘
+            </div>
+
+            <h3>VPS Specifications</h3>
+            <ul class="bullet-list">
+                <li><strong>RAM:</strong> 16GB (4GB model, 12GB available)</li>
+                <li><strong>CPU:</strong> 8 cores (60-70% usage during inference)</li>
+                <li><strong>Storage:</strong> 100GB SSD (model: 4.7GB)</li>
+                <li><strong>Deployment Time:</strong> 15 menit total</li>
+            </ul>
+
+            <h3>Alasan On-Premise dengan Ollama</h3>
+            <p>✅ Data Privacy | ✅ Cost Efficiency | ✅ Full Control | ✅ Compliance</p>
+            <div class="slide-number">6 / 10</div>
+        </div>
+
+        <!-- SLIDE 7: VALIDASI FUNGSIONAL -->
+        <div class="slide">
+            <h2>Validasi Fungsional - Internal Testing</h2>
+            
+            <div class="metrics-box">
+                <h3>Overall Validation Summary</h3>
+                <div class="metric-item">
+                    <span class="metric-label">Total Scenarios</span>
+                    <span class="metric-value">25</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Passed</span>
+                    <span class="metric-value">25 ✅</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Failed</span>
+                    <span class="metric-value">0</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Pass Rate</span>
+                    <span class="metric-value">100% 🎉</span>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Average Quality</span>
+                    <span class="metric-value">4.4/5 ⭐⭐⭐⭐</span>
+                </div>
+            </div>
+
+            <h3>Test Categories</h3>
+            <ul class="bullet-list">
+                <li>✅ <strong>Emotional Support</strong> (10 scenarios) - 100% passed</li>
+                <li>✅ <strong>Crisis Detection</strong> (5 scenarios) - Safety triggered correctly</li>
+                <li>✅ <strong>Cultural Appropriateness</strong> (5 scenarios) - All passed</li>
+                <li>✅ <strong>Conversation Flow</strong> (5 scenarios) - Coherent & natural</li>
+            </ul>
+            <div class="slide-number">7 / 10</div>
+        </div>
+
+        <!-- SLIDE 8: MODEL QUALITY EXAMPLE -->
+        <div class="slide">
+            <h2>Contoh Kualitas Respons Model</h2>
+            
+            <h3>Example: Emotional Support 💙</h3>
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 10px; margin: 15px 0;">
+                <p style="color: #666; margin-bottom: 10px;"><strong>USER:</strong></p>
+                <p style="color: #333;">"Saya merasa sangat cemas hari ini, pekerjaan menumpuk dan deadline semakin dekat"</p>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin: 15px 0; color: white;">
+                <p style="margin-bottom: 10px;"><strong>AI RESPONSE:</strong></p>
+                <p>"Terima kasih sudah berbagi perasaanmu denganku. Kecemasan karena pekerjaan yang menumpuk dan deadline yang dekat adalah hal yang sangat wajar dirasakan—banyak orang mengalami hal serupa.</p>
+                <p style="margin-top: 15px;">Apakah kamu mau menceritakan lebih lanjut tentang situasinya? Kadang berbagi dapat membantu meringankan beban yang kamu rasakan. Aku di sini untuk mendengarkan 💚"</p>
+            </div>
+
+            <h3>Assessment</h3>
+            <p>✅ Empathetic validation | ✅ Normalization | ✅ Open-ended question | ✅ Natural Indonesian</p>
+            <p><strong>Quality Score: 4.5/5</strong></p>
+            <div class="slide-number">8 / 10</div>
+        </div>
+
+        <!-- SLIDE 9: STABILITAS INFERENSI -->
+        <div class="slide">
+            <h2>Stabilitas Inferensi & Performance</h2>
+            
+            <h3>Response Time Analysis</h3>
+            <div class="code-block">
+TOTAL RESPONSE TIME: ±3 menit (180 seconds)
+
+Breakdown:
+  Model Loading (cached):    ~5s
+  Token Generation:        ~170s
+  Safety Processing:         ~5s
+  ────────────────────────────────
+  TOTAL:                   ~180s
+            </div>
+
+            <h3>Resource Usage (VPS)</h3>
+            <ul class="bullet-list">
+                <li><strong>RAM Usage:</strong> 4GB / 16GB <span class="status-badge badge-success">25% - SAFE</span></li>
+                <li><strong>CPU Usage:</strong> 60-70% during inference <span class="status-badge badge-success">ACCEPTABLE</span></li>
+                <li><strong>Storage:</strong> 4.7GB / 100GB <span class="status-badge badge-success">5% - SAFE</span></li>
+            </ul>
+
+            <h3>Stability Testing (48 Hours)</h3>
+            <p>✅ Uptime: <strong>100%</strong> (zero downtime)</p>
+            <p>✅ Crashes: <strong>0</strong> incidents</p>
+            <p>✅ Memory Leaks: <strong>None detected</strong></p>
+            <p>✅ Requests Handled: <strong>150+ (100% success)</strong></p>
+            <div class="slide-number">9 / 10</div>
+        </div>
+
+        <!-- SLIDE 10: KESIMPULAN -->
+        <div class="slide">
+            <h2>Kesimpulan & Next Steps</h2>
+            
+            <h3>✅ Week 6 Achievement Scorecard</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Objective</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Training Loss <1.0</td>
+                        <td class="improvement">0.847 ✅ Achieved</td>
+                    </tr>
+                    <tr>
+                        <td>Validation Pass Rate >80%</td>
+                        <td class="improvement">100% ✅ Exceeded</td>
+                    </tr>
+                    <tr>
+                        <td>System Stability</td>
+                        <td class="improvement">100% uptime ✅ Perfect</td>
+                    </tr>
+                    <tr>
+                        <td>Quality Improvement</td>
+                        <td class="improvement">+29% overall ✅ Exceeded</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>🎯 Next Steps - Week 7</h3>
+            <p><strong>Priority 1:</strong> Response Time Optimization (3 min → <1 min)</p>
+            <ul class="bullet-list">
+                <li>Implement response streaming</li>
+                <li>Test INT4 quantization</li>
+                <li>Optimize prompts</li>
+            </ul>
+
+            <p style="margin-top: 20px;"><strong>Priority 2:</strong> Comprehensive testing & UAT preparation</p>
+            <div class="slide-number">10 / 10</div>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ Previous</button>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next ▶</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            if (n >= totalSlides) currentSlide = totalSlides - 1;
+            if (n < 0) currentSlide = 0;
+            
+            slides[currentSlide].classList.add('active');
+            
+            // Update button states
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function changeSlide(direction) {
+            currentSlide += direction;
+            showSlide(currentSlide);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        });
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>

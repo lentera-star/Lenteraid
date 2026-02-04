@@ -1,0 +1,78 @@
+Subject: SSH Connection Issue After VPS Restart - Cannot Access Server
+
+---
+
+Dear Contabo Support,
+
+I am experiencing SSH connection issues with my VPS after performing a restart via the control panel.
+
+VPS Details:
+- IP Address: 84.247.150.83
+- Customer ID: [REPLACE WITH YOUR CUSTOMER ID FROM EMAIL]
+- Product ID: [REPLACE IF YOU HAVE IT]
+- Location: Singapore
+
+Issue Description:
+After restarting my VPS via the Contabo control panel, I am unable to connect via SSH or VNC.
+
+SSH Error:
+- Connection timeout during banner exchange
+- Error message: "Connection timed out during banner exchange"
+- Command used: ssh root@84.247.150.83
+- Port 22 is confirmed open (network test successful: TcpTestSucceeded : True)
+
+VNC Error:
+- Error: "An existing connection was forcibly closed by the remote host (10054)"
+- VNC IP: 194.233.90.172
+- VNC Port: 63306
+
+Current VPS Status:
+- VPS shows as "running" in control panel (green status)
+- HTTP services on port 8000 ARE responding correctly
+- Health check endpoint returns: {"status":"ok","ollama":"ready","whisper":"ready","tts":"ready"}
+- Only SSH (port 22) and VNC access are failing
+
+Timeline:
+- VPS restart initiated at: [INSERT TIME YOU RESTARTED]
+- Waited 30+ minutes for full boot
+- Issue persists as of: [CURRENT TIME]
+
+Steps Already Taken:
+1. Verified port 22 is open using Test-NetConnection (successful)
+2. Waited 30+ minutes after restart for services to fully initialize
+3. Tried multiple SSH clients: Windows OpenSSH, PuTTY
+4. Attempted VNC connection via TigerVNC viewer
+5. Attempted second restart - same issue persists
+
+Technical Details:
+- Client OS: Windows 11
+- SSH client: OpenSSH_for_Windows_9.5
+- Connection attempt from: Indonesia
+- Network: Stable, no local firewall blocking
+
+Request:
+Could you please investigate the SSH daemon and VNC service on my VPS? This is blocking critical backend configuration updates for my production application (mental health support system).
+
+The VPS is serving HTTP traffic correctly, so the system is running, but I cannot access it for administration.
+
+Urgency Level: High - Production server requiring configuration updates
+
+Please advise on:
+1. Can you check SSH daemon status on the server?
+2. Is there a way to restart SSH service remotely from your end?
+3. Should I try a force shutdown/restart, or would that risk data loss?
+
+Thank you for your prompt assistance.
+
+Best regards,
+[YOUR NAME]
+[YOUR EMAIL]
+[YOUR PHONE - OPTIONAL]
+
+---
+
+Additional Notes:
+- This is a new VPS (deployed on 2025-12-25)
+- First major issue encountered
+- Backend application: LENTERA Mental Health AI (Docker containerized)
+- Data: Minimal risk as code is in Git and database is external (Supabase)

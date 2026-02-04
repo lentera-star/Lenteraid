@@ -8,6 +8,10 @@ import os
 from typing import List, Dict
 from openai import OpenAI
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Initialize OpenAI client (or use local model)
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -158,7 +162,7 @@ No additional text, just the JSON.
         if category == "crisis":
             assistant_msg = data["assistant"].lower()
             if not ("119" in assistant_msg or "1500" in assistant_msg):
-                print(f"⚠️ Warning: Crisis scenario missing hotline in response")
+                print(f"[!] Warning: Crisis scenario missing hotline in response")
                 # Optionally reject or flag for review
         
         return {
@@ -170,7 +174,7 @@ No additional text, just the JSON.
         }
     
     except Exception as e:
-        print(f"❌ Error generating for '{scenario}': {e}")
+        print(f"[X] Error generating for '{scenario}': {e}")
         return None
 
 
@@ -193,13 +197,13 @@ def validate_response(response: str, category: str) -> bool:
     
     for phrase in prohibited:
         if phrase in response_lower:
-            print(f"⚠️ Ethics violation: Found prohibited phrase '{phrase}'")
+            print(f"[!] Ethics violation: Found prohibited phrase '{phrase}'")
             return False
     
     # Required for crisis
     if category == "crisis":
         if not any(hotline in response_lower for hotline in ["119", "1500", "into the light"]):
-            print(f"⚠️ Ethics violation: Crisis response missing hotline")
+            print(f"[!] Ethics violation: Crisis response missing hotline")
             return False
     
     return True
@@ -212,8 +216,8 @@ def generate_dataset(
 ):
     """Generate complete training dataset"""
     
-    print(f"🚀 Starting data generation: {num_examples} examples")
-    print(f"📁 Output: {output_file}")
+    print(f"[*] Starting data generation: {num_examples} examples")
+    print(f"[*] Output: {output_file}")
     print("=" * 60)
     
     generated = []
@@ -230,7 +234,7 @@ def generate_dataset(
         other_count = num_examples - crisis_count
     
     # Generate crisis scenarios first (most important!)
-    print(f"\n📍 Generating {crisis_count} CRISIS scenarios (HIGH PRIORITY)...")
+    print(f"\n[!] Generating {crisis_count} CRISIS scenarios (HIGH PRIORITY)...")
     for i, scenario in enumerate(SCENARIOS["crisis"] * (crisis_count // len(SCENARIOS["crisis"]) + 1)):
         if len([g for g in generated if g and g["category"] == "crisis"]) >= crisis_count:
             break
@@ -241,17 +245,17 @@ def generate_dataset(
         
         if conv and validate_response(conv["assistant"], "crisis"):
             generated.append(conv)
-            print("  ✅ Valid")
+            print("  [OK] Valid")
         else:
             failed += 1
-            print("  ❌ Invalid or error")
+            print("  [X] Invalid or error")
     
     # Generate other scenarios
     other_categories = [cat for cat in SCENARIOS if cat != "crisis"]
     examples_per_category = other_count // len(other_categories)
     
     for category in other_categories:
-        print(f"\n📍 Generating {examples_per_category} examples for '{category}'...")
+        print(f"\n[!] Generating {examples_per_category} examples for '{category}'...")
         
         count = 0
         scenario_idx = 0
@@ -265,15 +269,15 @@ def generate_dataset(
             if conv and validate_response(conv["assistant"], category):
                 generated.append(conv)
                 count += 1
-                print("  ✅ Valid")
+                print("  [OK] Valid")
             else:
                 failed += 1
-                print("  ❌ Invalid or error")
+                print("  [X] Invalid or error")
             
             scenario_idx += 1
     
     # Save to JSONL
-    print(f"\n💾 Saving {len(generated)} examples to {output_file}...")
+    print(f"\n[*] Saving {len(generated)} examples to {output_file}...")
     
     with open(output_file, "w", encoding="utf-8") as f:
         for item in generated:
@@ -303,14 +307,14 @@ def generate_dataset(
             f.write(json.dumps(training_format, ensure_ascii=False) + "\n")
     
     print("\n" + "=" * 60)
-    print(f"✅ Generation complete!")
+    print(f"[OK] Generation complete!")
     print(f"   Total generated: {len(generated)}")
     print(f"   Failed: {failed}")
     print(f"   Success rate: {len(generated)/(len(generated)+failed)*100:.1f}%")
     print(f"   Output file: {output_file}")
     
     # Stats by category
-    print(f"\n📊 Distribution:")
+    print(f"\n[STATS] Distribution:")
     for category in SCENARIOS.keys():
         count = len([g for g in generated if g["category"] == category])
         print(f"   {category}: {count}")
@@ -351,7 +355,7 @@ def create_train_val_split(
         for item in val_data:
             f.write(json.dumps(item, ensure_ascii=False) + "\n")
     
-    print(f"✅ Split complete:")
+    print(f"[OK] Split complete:")
     print(f"   Train: {len(train_data)} ({train_file})")
     print(f"   Val: {len(val_data)} ({val_file})")
 
@@ -368,7 +372,7 @@ if __name__ == "__main__":
     
     # Check API key
     if not os.getenv("OPENAI_API_KEY"):
-        print("⚠️ Warning: OPENAI_API_KEY not set!")
+        print("[WARNING] OPENAI_API_KEY not set!")
         print("Set it with: export OPENAI_API_KEY='your-key'")
         exit(1)
     
@@ -382,7 +386,7 @@ if __name__ == "__main__":
     if args.split:
         create_train_val_split(input_file=args.output)
     
-    print("\n🎉 All done! Ready for fine-tuning!")
+    print("\n[DONE] All done! Ready for fine-tuning!")
     print(f"\nNext steps:")
     print(f"1. Review generated examples manually")
     print(f"2. Get mental health expert to validate")

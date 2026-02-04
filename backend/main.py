@@ -12,12 +12,17 @@ import base64
 from typing import Optional
 import os
 import logging
+from datetime import datetime
 
 # Import services
-from ollama_service import OllamaService, MENTAL_HEALTH_SYSTEM_PROMPT
-from whisper_service import get_whisper_service
-from tts_service import get_tts_service
-from audio_utils import AudioUtils
+from ai_service import AIService
+from prompts import MENTAL_HEALTH_SYSTEM_PROMPT
+# from whisper_service import get_whisper_service  # Commented for now - install faster-whisper later
+# from tts_service import get_tts_service  # Commented for now
+# from audio_utils import AudioUtils  # Commented for now
+from safety_validator import validate_input, validate_output, get_crisis_response
+from crisis_handler import handle_crisis
+
 
 # Configure logging
 logging.basicConfig(
@@ -42,7 +47,7 @@ app.add_middleware(
 )
 
 # Initialize services
-ollama_service = OllamaService()
+ai_service = AIService()
 whisper_service = None
 tts_service = None
 
@@ -131,27 +136,99 @@ async def health_check():
 @app.post("/api/chat")
 async def chat(message: ChatMessage):
     """
-    Process text chat messages with AI
+    Process text chat messages with AI (with safety validation)
     """
     try:
+        # Validate user input for safety
+        validation_result = validate_input(message.message)
+        
+        # Handle AMBIGUOUS crisis (Template v2 - isolation/secrecy)
+        if validation_result.get("is_crisis") == "ambiguous":
+            logger.warning(f"AMBIGUOUS crisis (Template v2): {validation_result['recommended_action']}")
+            # Force Template v2 with strong boundary-setting
+            template_v2_override = """
+CRITICAL: This is Template v2 scenario - boundary setting REQUIRED.
+
+User context: {context}
+
+You MUST respond with this structure:
+1. Validasi feelings
+2. WAJIB state boundary: "aku tidak bisa menggantikan peran manusia yang bisa memberi dukungan langsung kalau situasinya menjadi sangat berat"
+3. For SECRECY: "aku tidak bisa menjaga rahasia mutlak kalau berkaitan dengan keselamatan"
+4. Gentle clarification question
+5. NO hotline mention yet
+""".format(context=validation_result.get("recommended_action", "boundary_setting"))
+            
+            messages = [
+                {"role": "system", "content": MENTAL_HEALTH_SYSTEM_PROMPT + "\n\n" + template_v2_override},
+                {"role": "user", "content": message.message}
+            ]
+            
+            # Get AI response
+            response = await ai_service.chat(messages)
+            ai_message = response if isinstance(response, str) else response.get("message", {}).get("content", "")
+            
+            # Validate output
+            is_valid, error = validate_output(ai_message)
+            if not is_valid:
+                # Fallback to safe Template v2
+                if "secrecy" in validation_result.get("recommended_action", ""):
+                    ai_message = "Aku bisa mengerti kalau kamu ingin menjaga ini tetap pribadi. Aku ingin jujur: aku bisa mendengarkan dan menemani, tapi aku tidak bisa menjaga rahasia mutlak kalau berkaitan dengan keselamatan. Supaya aku bisa merespons dengan tepat, apakah yang kamu rasakan sekarang lebih ke ingin melindungi privasi, atau karena kamu sedang merasa sangat tertekan?"
+                elif "medication" in validation_result.get("recommended_action", ""):
+                    ai_message = "Aku mengerti kenapa kamu bisa kepikiran tentang obat, apalagi kalau rasanya sudah sangat berat. Aku tidak bisa menyarankan atau menilai penggunaan obat penenang, karena itu perlu pertimbangan dan pendampingan tenaga kesehatan. Yang bisa kita lakukan di sini adalah membantumu memahami apa yang sedang kamu rasakan dan mencari cara aman untuk meredakannya sementara. Kalau kamu mau, aku ingin tahu: apakah pikiran tentang obat ini muncul karena kamu merasa sangat cemas, sulit tidur, atau kelelahan?"
+                else:
+                    ai_message = "Kedengarannya kamu lagi butuh ditemani, dan itu perasaan yang sangat manusiawi. Aku bisa menemani dan mendengarkan, tapi aku tidak bisa menggantikan peran manusia yang bisa memberi dukungan langsung kalau situasinya menjadi sangat berat. Biar aku bisa lebih paham, yang kamu rasakan sekarang lebih ke merasa kesepian, atau sedang sangat tertekan?"
+            
+            return {
+                "message": ai_message,
+                "conversation_id": message.conversation_id or "new-conv-id",
+                "timestamp": datetime.now().isoformat(),
+                "is_crisis": "ambiguous"  # Return as ambiguous for tracking
+            }
+        
+        # Handle TRUE crisis situations (suicide, self-harm, etc)
+        if validation_result["is_crisis"] == True:
+            logger.warning(f"Crisis detected in chat: {validation_result}")
+            crisis_response = handle_crisis(
+                validation_result,
+                {"user_id": message.user_id or "anonymous"}
+            )
+            return {
+                "message": crisis_response,
+                "conversation_id": message.conversation_id or "crisis-response",
+                "is_crisis": True,
+                "timestamp": datetime.now().isoformat()
+            }
+        
         # Prepare messages for Ollama
         messages = [
             {"role": "system", "content": MENTAL_HEALTH_SYSTEM_PROMPT},
             {"role": "user", "content": message.message}
         ]
         
-        # Get response from Ollama
-        response = await ollama_service.chat(messages)
+        # Get response from AI
+        response = await ai_service.chat(messages)
         
-        if "error" in response:
-            raise HTTPException(status_code=500, detail=response["error"])
+        # Handle response (could be string from OpenAI or dict from Ollama)
+        if isinstance(response, str):
+            ai_message = response
+        else:
+            if "error" in response:
+                raise HTTPException(status_code=500, detail=response["error"])
+            ai_message = response.get("message", {}).get("content", "")
         
-        ai_message = response.get("message", {}).get("content", "")
+        # Validate AI output for safety
+        is_valid, error = validate_output(ai_message)
+        if not is_valid:
+            logger.error(f"AI output validation failed: {error}")
+            # Fallback to safe response
+            ai_message = "Maaf, saya kesulitan merespon dengan tepat. Bisakah kamu ceritakan lebih lanjut tentang yang kamu rasakan?"
         
         return {
             "message": ai_message,
             "conversation_id": message.conversation_id or "new-conv-id",
-            "timestamp": response.get("created_at", "")
+            "timestamp": datetime.now().isoformat(),
+            "is_crisis": validation_result.get("is_crisis", False)  # Pass through ambiguous/true/false
         }
         
     except Exception as e:
@@ -245,7 +322,7 @@ async def voice_call_websocket(websocket: WebSocket):
                     {"role": "user", "content": transcript}
                 ]
                 
-                llm_response = await ollama_service.chat(messages)
+                llm_response = await ai_service.chat(messages)
                 ai_text = llm_response.get("message", {}).get("content", "Maaf, saya tidak mengerti.")
                 logger.info(f"AI response: '{ai_text[:50]}...'")
                 
@@ -310,7 +387,7 @@ async def analyze_mood(data: dict):
             {"role": "user", "content": prompt}
         ]
         
-        response = await ollama_service.chat(messages)
+        response = await ai_service.chat(messages)
         ai_analysis = response.get("message", {}).get("content", "")
         
         return {

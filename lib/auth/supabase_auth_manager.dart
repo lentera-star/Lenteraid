@@ -230,4 +230,56 @@ class SupabaseAuthManager extends AuthManager with EmailSignInManager {
 
   // Get current auth user ID
   String? get currentUserId => SupabaseConfig.auth.currentUser?.id;
+
+  /// Sign in with Google OAuth
+  Future<app_user.User?> signInWithGoogle(BuildContext context) async {
+    try {
+      final response = await SupabaseConfig.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: kIsWeb 
+            ? 'http://localhost:5500/auth/v1/callback'  // Fixed port for web development
+            : 'io.lentera.app://login-callback',         // For mobile app
+      );
+
+      if (!response) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Google Sign-In dibatalkan')),
+          );
+        }
+        return null;
+      }
+
+      // Wait for auth state change
+      await Future.delayed(const Duration(seconds: 2));
+
+      final authUser = SupabaseConfig.auth.currentUser;
+      if (authUser != null) {
+        // Check if user exists in users table
+        var user = await _userService.getUserById(authUser.id);
+        
+        // If user doesn't exist, create new user record
+        if (user == null) {
+          final newUser = app_user.User(
+            id: authUser.id,
+            email: authUser.email ?? '',
+            fullName: authUser.userMetadata?['full_name'] ?? authUser.email?.split('@')[0] ?? 'User',
+            createdAt: DateTime.now(),
+          );
+          user = await _userService.createUser(newUser);
+        }
+        
+        return user;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error signing in with Google: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Google Sign-In gagal: ${e.toString()}')),
+        );
+      }
+      return null;
+    }
+  }
 }

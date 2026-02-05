@@ -84,7 +84,16 @@ Berikan insight sesuai format yang sudah ditentukan.`
             if (!hasSystem) {
                 messages.unshift({
                     role: 'system',
-                    content: 'Kamu adalah Sahabat Lentera, asisten kesehatan mental yang empatik, tenang, dan suportif. Berikan jawaban yang singkat, hangat, dan fokus pada pendengaran aktif. Gunakan Bahasa Indonesia yang natural dan hindari pengulangan kalimat yang sama.'
+                    content: `Kamu adalah Sahabat Lentera, asisten kesehatan mental yang empatik, tenang, dan suportif. 
+
+ATURAN KRITIS TENTANG MEMORI:
+1. BACA SELURUH riwayat percakapan dengan SANGAT TELITI sebelum merespons
+2. INGAT SEMUA detail yang dibagikan user: nama mereka, nama orang lain, cerita, peristiwa, perasaan, dll
+3. GUNAKAN informasi dari pesan sebelumnya untuk menunjukkan bahwa kamu benar-benar mendengarkan
+4. Jika user bertanya tentang sesuatu yang sudah mereka ceritakan sebelumnya, JAWAB berdasarkan informasi itu
+5. Jangan pernah bilang "tidak tahu" atau "lupa" untuk hal yang sudah user ceritakan dalam percakapan ini
+
+Berikan jawaban yang singkat, hangat, dan fokus pada pendengaran aktif. Gunakan Bahasa Indonesia yang natural dan hindari pengulangan kalimat yang sama.`
                 })
             }
         }
@@ -92,33 +101,54 @@ Berikan insight sesuai format yang sudah ditentukan.`
         console.log(`📤 Proxying ${mode} request to target endpoint`)
 
         // Forward request to target
+        let payload = {}
+        if (modelMode === 'fast') {
+            const lastMessage = messages[messages.length - 1]?.content || ''
+            payload = {
+                message: lastMessage,
+                user_id: body.user_id || 'anonymous',
+                conversation_id: body.conversation_id || `conv_${Date.now()}`
+            }
+        } else {
+            payload = {
+                messages: messages,
+                max_tokens: body.max_tokens || 256,
+                temperature: body.temperature || 0.7,
+                repeat_penalty: body.repeat_penalty || 1.1,
+            }
+        }
+
         const response = await fetch(targetEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                messages: messages,
-                max_tokens: body.max_tokens || 256, // Lower default for chat
-                temperature: body.temperature || 0.7,
-                repeat_penalty: body.repeat_penalty || 1.1,
-            }),
+            body: JSON.stringify(payload),
         })
 
         if (!response.ok) {
             const errorText = await response.text()
-            console.error('❌ Modal endpoint error:', errorText)
-            throw new Error(`Modal returned ${response.status}: ${errorText}`)
+            console.error(`❌ ${modelMode.toUpperCase()} endpoint error:`, errorText)
+            throw new Error(`${modelMode.toUpperCase()} returned ${response.status}: ${errorText}`)
         }
 
         const data = await response.json()
-        const responseText = data.choices?.[0]?.message?.content || ''
 
-        console.log('✅ Successfully received response from Modal')
+        // Handle different response formats (OpenAI-like from Modal/OpenAI vs flat-json from VPS)
+        let responseText = ''
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+            responseText = data.choices[0].message.content || ''
+        } else if (data.message) {
+            responseText = data.message
+        } else if (data.response) {
+            responseText = data.response
+        }
+
+        console.log(`✅ Successfully received response from ${modelMode.toUpperCase()}`)
         console.log('Response preview:', responseText.substring(0, 100))
 
         // Transform response based on mode for Flutter AIService compatibility
-        let mappedData = {}
+        let mappedData: any = {}
         if (mode === 'mood_analysis') {
             mappedData = {
                 analysis: responseText,
@@ -128,9 +158,9 @@ Berikan insight sesuai format yang sudah ditentukan.`
         } else {
             mappedData = {
                 message: responseText,
-                conversation_id: body.conversation_id || `conv_${Date.now()}`,
-                timestamp: new Date().toISOString(),
-                is_crisis: false // Optional: could be checked by another AI pass
+                conversation_id: data.conversation_id || body.conversation_id || `conv_${Date.now()}`,
+                timestamp: data.timestamp || new Date().toISOString(),
+                is_crisis: data.is_crisis || false
             }
         }
 

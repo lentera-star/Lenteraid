@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lentera/theme.dart';
+import 'package:lentera/services/quiz_service.dart';
+import 'package:lentera/auth/supabase_auth_manager.dart';
 
 class TriviaScreen extends StatefulWidget {
   const TriviaScreen({super.key});
@@ -14,34 +16,82 @@ class _TriviaScreenState extends State<TriviaScreen> {
   int _currentIndex = 0;
   String? _selectedAnswer;
   bool _showResult = false;
-  // Ensure users always see education even if state restores directly to quiz
-  // We'll render a compact education card above the quiz as well.
+  bool _isLoadingQuestions = true;
+  bool _isPersonalized = false;
+  String? _errorMessage;
+  
+  final _quizService = QuizService();
+  List<Map<String, dynamic>> _trivias = [];
 
-  final List<Map<String, dynamic>> _trivias = [
-    {
-      'question': 'Berapa lama waktu tidur yang ideal untuk orang dewasa?',
-      'options': ['5-6 jam', '7-9 jam', '10-12 jam', '4-5 jam'],
-      'correctAnswer': '7-9 jam',
-      'explanation': 'Orang dewasa membutuhkan 7-9 jam tidur per malam untuk kesehatan optimal.',
-    },
-    {
-      'question': 'Apa yang dimaksud dengan mindfulness?',
-      'options': [
-        'Berpikir tentang masa lalu',
-        'Fokus pada saat ini',
-        'Merencanakan masa depan',
-        'Multitasking'
-      ],
-      'correctAnswer': 'Fokus pada saat ini',
-      'explanation': 'Mindfulness adalah praktik untuk fokus pada momen saat ini tanpa judgment.',
-    },
-    {
-      'question': 'Aktivitas fisik yang disarankan per minggu adalah?',
-      'options': ['30 menit', '75 menit', '150 menit', '300 menit'],
-      'correctAnswer': '150 menit',
-      'explanation': 'WHO merekomendasikan 150 menit aktivitas fisik intensitas sedang per minggu.',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadPersonalizedQuiz();
+  }
+
+  Future<void> _loadPersonalizedQuiz() async {
+    setState(() => _isLoadingQuestions = true);
+    
+    final userId = SupabaseAuthManager().currentUserId;
+    if (userId == null) {
+      setState(() {
+        _trivias = _getStaticQuestions();
+        _isLoadingQuestions = false;
+        _isPersonalized = false;
+      });
+      return;
+    }
+    
+    try {
+      final questions = await _quizService.generateQuiz(
+        userId: userId,
+        questionCount: 3,
+      );
+      
+      setState(() {
+        _trivias = questions;
+        _isLoadingQuestions = false;
+        _isPersonalized = questions.any((q) => q.containsKey('personalized'));
+      });
+    } catch (e) {
+      debugPrint('Error loading quiz: $e');
+      setState(() {
+        _trivias = _getStaticQuestions();
+        _isLoadingQuestions = false;
+        _isPersonalized = false;
+        _errorMessage = 'Gagal memuat trivia personal, menggunakan pertanyaan default.';
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> _getStaticQuestions() {
+    return [
+      {
+        'question': 'Berapa lama waktu tidur yang ideal untuk orang dewasa?',
+        'options': ['5-6 jam', '7-9 jam', '10-12 jam', '4-5 jam'],
+        'correctAnswer': '7-9 jam',
+        'explanation': 'Orang dewasa membutuhkan 7-9 jam tidur per malam untuk kesehatan optimal.',
+      },
+      {
+        'question': 'Apa yang dimaksud dengan mindfulness?',
+        'options': [
+          'Berpikir tentang masa lalu',
+          'Fokus pada saat ini',
+          'Merencanakan masa depan',
+          'Multitasking'
+        ],
+        'correctAnswer': 'Fokus pada saat ini',
+        'explanation': 'Mindfulness adalah praktik untuk fokus pada momen saat ini tanpa judgment.',
+      },
+      {
+        'question': 'Aktivitas fisik yang disarankan per minggu adalah?',
+        'options': ['30 menit', '75 menit', '150 menit', '300 menit'],
+        'correctAnswer': '150 menit',
+        'explanation': 'WHO merekomendasikan 150 menit aktivitas fisik intensitas sedang per minggu.',
+      },
+    ];
+  }
+
 
   Map<String, dynamic> get _currentTrivia => _trivias[_currentIndex];
 
@@ -117,6 +167,36 @@ class _TriviaScreenState extends State<TriviaScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // Show loading spinner while questions are being generated
+    if (_isLoadingQuestions) {
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        appBar: AppBar(
+          title: Text('Daily Trivia', style: context.textStyles.titleLarge?.semiBold),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: theme.colorScheme.primary),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'Menyiapkan trivia untuk Anda...',
+                style: context.textStyles.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final isCorrect = _selectedAnswer == _currentTrivia['correctAnswer'];
 
     return Scaffold(
@@ -130,7 +210,62 @@ class _TriviaScreenState extends State<TriviaScreen> {
       ),
       body: Padding(
         padding: AppSpacing.paddingLg,
-        child: _inIntro ? _buildIntro(context) : _buildQuiz(context, theme, isCorrect),
+        child: Column(
+          children: [
+            // Personalization banner
+            if (_isPersonalized)
+              Container(
+                margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                padding: AppSpacing.paddingMd,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: theme.colorScheme.primary, size: 20),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        'Pertanyaan dipersonalisasi berdasarkan mood Anda minggu ini ✨',
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Error message
+            if (_errorMessage != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                padding: AppSpacing.paddingMd,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: theme.colorScheme.error, size: 20),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: context.textStyles.bodySmall?.copyWith(
+                          color: theme.colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: _inIntro ? _buildIntro(context) : _buildQuiz(context, theme, isCorrect),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -153,9 +288,24 @@ class _TriviaScreenState extends State<TriviaScreen> {
             children: [
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Image.asset(
-                  'assets/images/mindfulness_education_minimal_illustration_turquoise_1765787407954.png',
-                  fit: BoxFit.cover,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primaryContainer,
+                        theme.colorScheme.secondaryContainer,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.psychology,
+                      size: 80,
+                      color: theme.colorScheme.primary.withAlpha(150),
+                    ),
+                  ),
                 ),
               ),
               Padding(
@@ -236,9 +386,24 @@ class _TriviaScreenState extends State<TriviaScreen> {
             children: [
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Image.asset(
-                  'assets/images/mindfulness_education_minimal_illustration_turquoise_1765787407954.png',
-                  fit: BoxFit.cover,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primaryContainer,
+                        theme.colorScheme.secondaryContainer,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.psychology,
+                      size: 80,
+                      color: theme.colorScheme.primary.withAlpha(150),
+                    ),
+                  ),
                 ),
               ),
               Padding(
@@ -283,7 +448,7 @@ class _TriviaScreenState extends State<TriviaScreen> {
           style: context.textStyles.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: AppSpacing.xl),
-        ...(_currentTrivia['options'] as List<String>).map((option) {
+        ...((_currentTrivia['options'] as List).cast<String>()).map((option) {
           final isSelected = _selectedAnswer == option;
           final isCorrectOption = option == _currentTrivia['correctAnswer'];
           Color? backgroundColor;

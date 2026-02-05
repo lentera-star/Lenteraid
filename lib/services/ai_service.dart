@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:lentera/models/mood_entry.dart';
 import 'api_client.dart';
+export 'api_client.dart' show AiModelMode;
 
 /// AI Service - handles all AI-related operations
 /// Communicates with LENTERA backend for chat and mood analysis

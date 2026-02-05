@@ -1,0 +1,30 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+set password "Lentera123"
+
+spawn ssh root@84.247.150.83
+
+expect {
+    "password:" {
+        send "$password\r"
+        expect "#"
+        send "sudo fuser -k 8000/tcp\r"
+        expect "#"
+        send "pkill -f 'main.py'\r"
+        expect "#"
+        send "sudo systemctl restart lentera-backend\r"
+        expect "#"
+        send "sleep 5\r"
+        expect "#"
+        send "sudo systemctl status lentera-backend --no-pager\r"
+        expect "#"
+        send "curl -s http://localhost:8000/health\r"
+        expect "#"
+        send "exit\r"
+    }
+    timeout {
+        puts "Connection timed out"
+        exit 1
+    }
+}

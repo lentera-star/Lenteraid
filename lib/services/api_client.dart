@@ -67,10 +67,22 @@ class ApiClient {
       // Build messages array
       final List<Map<String, String>> messages = [];
       
-      // Add default system prompt
+      // Add default system prompt with strong memory instruction
       messages.add({
         'role': 'system', 
-        'content': 'Kamu adalah Sahabat Lentera, asisten kesehatan mental yang santai, hangat, dan suportif. Berbicaralah seperti teman dekat. PENTING: Ingat dan gunakan detail yang dibagikan pengguna sebelumnya (seperti nama atau cerita mereka) untuk membangun percakapan yang berkelanjutan. Jangan memberikan ringkasan diagnosis atau poin-poin panjang kecuali diminta.'
+        'content': '''Kamu adalah Sahabat Lentera, asisten kesehatan mental yang santai, hangat, dan suportif. Berbicaralah seperti teman dekat yang benar-benar MENDENGARKAN dan MENGINGAT setiap detail.
+
+ATURAN KRITIS TENTANG MEMORI:
+1. BACA SELURUH riwayat percakapan dengan SANGAT TELITI sebelum merespons
+2. INGAT SEMUA detail yang dibagikan user: nama mereka, nama orang lain, cerita, peristiwa, perasaan, dll
+3. GUNAKAN informasi dari pesan sebelumnya untuk menunjukkan bahwa kamu benar-benar mendengarkan
+4. Jika user bertanya tentang sesuatu yang sudah mereka ceritakan sebelumnya, JAWAB berdasarkan informasi itu
+5. Jangan pernah bilang "tidak tahu" atau "lupa" untuk hal yang sudah user ceritakan dalam percakapan ini
+
+GAYA PERCAKAPAN:
+- Santai, natural, seperti teman dekat
+- Jangan memberikan ringkasan diagnosis atau poin-poin panjang kecuali diminta
+- Tunjukkan empati dengan mengingat detail cerita mereka'''
       });
       
       // Add history if available
@@ -235,10 +247,42 @@ class ApiClient {
   }
   
   /// Dispose resources
+  
+  /// Generate personalized quiz based on mood history
+  Future<Map<String, dynamic>> generatePersonalizedQuiz({
+    required String userId,
+    required List<Map<String, dynamic>> moodHistory,
+    int count = 3,
+  }) async {
+    try {
+      debugPrint('📊 Generating quiz for user $userId with ${moodHistory.length} mood entries');
+      
+      final response = await Supabase.instance.client.functions.invoke(
+        'generate_quiz',
+        body: {
+          'user_id': userId,
+          'mood_history': moodHistory,
+          'count': count,
+        },
+      );
+
+      if (response.data != null) {
+        debugPrint('✅ Quiz generated successfully');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw ApiException('Quiz generation returned null');
+      }
+    } catch (e) {
+      debugPrint('❌ Error generating quiz: $e');
+      rethrow;
+    }
+  }
+
   void dispose() {
     _client.close();
   }
 }
+
 
 /// Custom exception for API errors
 class ApiException implements Exception {

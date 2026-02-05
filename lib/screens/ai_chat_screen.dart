@@ -216,8 +216,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
                               subtitle: const Text('Fine-tuned untuk empati & curhat.'),
                               trailing: _selectedMode == AiModelMode.smart ? Icon(Icons.check_circle, color: theme.primaryColor) : null,
                               onTap: () {
-                                setState(() => _selectedMode = AiModelMode.smart);
                                 Navigator.pop(context);
+                                setState(() => _selectedMode = AiModelMode.smart);
                               },
                             ),
                             ListTile(
@@ -226,8 +226,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
                               subtitle: const Text('Model ringan & cepat di VPS.'),
                               trailing: _selectedMode == AiModelMode.fast ? Icon(Icons.check_circle, color: theme.primaryColor) : null,
                               onTap: () {
-                                setState(() => _selectedMode = AiModelMode.fast);
                                 Navigator.pop(context);
+                                setState(() => _selectedMode = AiModelMode.fast);
                               },
                             ),
                           ],

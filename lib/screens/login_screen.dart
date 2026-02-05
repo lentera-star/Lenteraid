@@ -181,6 +181,52 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : const Text('Masuk', style: TextStyle(fontSize: 16)),
                   ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: theme.colorScheme.onSurface.withValues(alpha: 0.2))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'atau',
+                          style: GoogleFonts.inter(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: theme.colorScheme.onSurface.withValues(alpha: 0.2))),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  OutlinedButton.icon(
+                    onPressed: _isLoading ? null : () async {
+                      setState(() => _isLoading = true);
+                      final user = await _authManager.signInWithGoogle(context);
+                      setState(() => _isLoading = false);
+                      if (user != null && mounted) {
+                        context.go('/home');
+                      }
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      side: BorderSide(color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
+                    ),
+                    icon: Image.network(
+                      'https://www.google.com/favicon.ico',
+                      width: 20,
+                      height: 20,
+                    ),
+                    label: Text(
+                      'Masuk dengan Google',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

@@ -40,6 +40,12 @@ class ApiConfig {
   static const String healthEndpoint = '/health';
 }
 
+/// Available AI Model Modes
+enum AiModelMode {
+  smart, // Modal GPU (Fine-tuned, Best Quality, Empathic)
+  fast   // VPS (Compressed, Lowest Latency, Quick Reply)
+}
+
 /// API Client for communicating with LENTERA backend
 class ApiClient {
   final String baseUrl;
@@ -56,8 +62,10 @@ class ApiClient {
   /// Returns AI response or throws exception
   Future<Map<String, dynamic>> sendChatMessage({
     required String message,
+    List<Map<String, String>>? history,
     String? userId,
     String? conversationId,
+    AiModelMode mode = AiModelMode.smart,
   }) async {
     try {
       // Use Supabase Edge Function → Modal GPU endpoint
@@ -65,6 +73,23 @@ class ApiClient {
       
       debugPrint('📤 Sending message to: $url');
       
+      // Build messages array
+      final List<Map<String, String>> messages = [];
+      
+      // Add default system prompt
+      messages.add({
+        'role': 'system', 
+        'content': 'Kamu adalah Sahabat Lentera, asisten kesehatan mental yang santai, hangat, dan suportif. Berbicaralah seperti teman dekat. PENTING: Ingat dan gunakan detail yang dibagikan pengguna sebelumnya (seperti nama atau cerita mereka) untuk membangun percakapan yang berkelanjutan. Jangan memberikan ringkasan diagnosis atau poin-poin panjang kecuali diminta.'
+      });
+      
+      // Add history if available
+      if (history != null && history.isNotEmpty) {
+        messages.addAll(history);
+      }
+      
+      // Add current user message
+      messages.add({'role': 'user', 'content': message});
+
       final response = await _client.post(
         url,
         headers: {
@@ -73,12 +98,11 @@ class ApiClient {
           'apikey': ApiConfig.supabaseAnonKey,
         },
         body: jsonEncode({
-          // OpenAI-compatible format for Modal
-          'messages': [
-            {'role': 'user', 'content': message}
-          ],
-          'max_tokens': 512,
+          'messages': messages,
+          'model_mode': mode.name,
+          'max_tokens': 200, // Keep responses concise
           'temperature': 0.7,
+          'repeat_penalty': 1.1,
         }),
       ).timeout(
         const Duration(seconds: 300), // Longer timeout for longer CPU inference

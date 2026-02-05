@@ -26,6 +26,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final TextEditingController _controller = TextEditingController();
   bool _isTyping = false;
+  AiModelMode _selectedMode = AiModelMode.smart;
 
   @override
   void initState() {
@@ -70,9 +71,29 @@ class _AiChatScreenState extends State<AiChatScreen> {
         duration: const Duration(milliseconds: 180));
 
     try {
+      // Prepare conversation history (exclude current prompt and typing/error messages)
+      final nonTypingMessages = _messages.where((m) => 
+        !m.isTyping && 
+        m.text != prompt && 
+        !m.text.contains('kesulitan merespons')
+      ).toList();
+      
+      final historyCount = nonTypingMessages.length;
+      final history = nonTypingMessages
+          .skip(historyCount > 15 ? historyCount - 15 : 0)
+          .map((m) => {
+                'role': m.isUser ? 'user' : 'assistant',
+                'content': m.text,
+              })
+          .toList();
+
       // Call real AI via AIService → Supabase → Modal GPU
       final aiService = AIService();
-      final response = await aiService.sendMessage(message: prompt);
+      final response = await aiService.sendMessage(
+        message: prompt,
+        history: history,
+        mode: _selectedMode,
+      );
       
       // Remove typing indicator
       _removeTypingIndicator();
@@ -143,14 +164,24 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'Sahabat Lentera',
-                          style: textTheme.titleLarge?.semiBold.withColor(chatColors.slateBlue),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Sahabat Lentera',
+                              style: textTheme.titleLarge?.semiBold.withColor(chatColors.slateBlue),
+                            ),
+                            Text(
+                              _selectedMode == AiModelMode.smart ? 'Smart (Llama 3)' : 'Fast (VPS)',
+                              style: textTheme.labelSmall?.copyWith(color: chatColors.slateBlue.withOpacity(0.6)),
+                            ),
+                          ],
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          width: 10,
-                          height: 10,
+                          width: 8,
+                          height: 8,
                           decoration: BoxDecoration(
                             color: chatColors.onlineGreen,
                             shape: BoxShape.circle,
@@ -159,6 +190,50 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       ],
                     ),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.tune),
+                  color: chatColors.deepTeal,
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: theme.scaffoldBackgroundColor,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      builder: (context) => Container(
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Pilih Model AI', style: textTheme.titleLarge),
+                            const SizedBox(height: 16),
+                            ListTile(
+                              leading: const Icon(Icons.auto_awesome, color: Colors.amber),
+                              title: const Text('Smart (Llama 3.1)'),
+                              subtitle: const Text('Fine-tuned untuk empati & curhat.'),
+                              trailing: _selectedMode == AiModelMode.smart ? Icon(Icons.check_circle, color: theme.primaryColor) : null,
+                              onTap: () {
+                                setState(() => _selectedMode = AiModelMode.smart);
+                                Navigator.pop(context);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.bolt, color: Colors.blue),
+                              title: const Text('Fast (Compressed)'),
+                              subtitle: const Text('Model ringan & cepat di VPS.'),
+                              trailing: _selectedMode == AiModelMode.fast ? Icon(Icons.check_circle, color: theme.primaryColor) : null,
+                              onTap: () {
+                                setState(() => _selectedMode = AiModelMode.fast);
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  tooltip: 'Ganti Model AI',
                 ),
                 IconButton(
                   icon: const Icon(Icons.phone),

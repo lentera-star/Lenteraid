@@ -15,14 +15,18 @@ class AIService {
   /// Returns AI response text and metadata
   Future<AIResponse> sendMessage({
     required String message,
+    List<Map<String, String>>? history,
     String? userId,
     String? conversationId,
+    AiModelMode mode = AiModelMode.smart,
   }) async {
     try {
       final response = await _apiClient.sendChatMessage(
         message: message,
+        history: history,
         userId: userId,
         conversationId: conversationId,
+        mode: mode,
       );
       
       return AIResponse.fromJson(response);
@@ -89,13 +93,30 @@ class AIResponse {
   });
   
   factory AIResponse.fromJson(Map<String, dynamic> json) {
+    // Robust parsing: check for root 'message' or nested OpenAI-style 'choices'
+    String message = json['message'] as String? ?? '';
+    
+    if (message.isEmpty && json['choices'] != null && json['choices'] is List) {
+      final choices = json['choices'] as List;
+      if (choices.isNotEmpty) {
+        final firstChoice = choices[0];
+        if (firstChoice['message'] != null && firstChoice['message']['content'] != null) {
+          message = firstChoice['message']['content'] as String? ?? '';
+        } else if (firstChoice['text'] != null) {
+          // Fallback for non-chat completion style
+          message = firstChoice['text'] as String? ?? '';
+        }
+      }
+    }
+
     return AIResponse(
-      message: json['message'] as String? ?? '',
-      conversationId: json['conversation_id'] as String? ?? '',
+      message: message,
+      conversationId: json['conversation_id'] as String? ?? json['id'] as String? ?? '',
       timestamp: json['timestamp'] as String? ?? DateTime.now().toIso8601String(),
       isCrisis: json['is_crisis'] == true || json['is_crisis'] == 'true',
     );
   }
+
   
   Map<String, dynamic> toJson() {
     return {
@@ -120,12 +141,28 @@ class MoodAnalysisResponse {
   });
   
   factory MoodAnalysisResponse.fromJson(Map<String, dynamic> json) {
+    // Robust parsing: check for root 'analysis' or nested OpenAI-style 'choices'
+    String analysis = json['analysis'] as String? ?? '';
+    
+    if (analysis.isEmpty && json['choices'] != null && json['choices'] is List) {
+      final choices = json['choices'] as List;
+      if (choices.isNotEmpty) {
+        final firstChoice = choices[0];
+        if (firstChoice['message'] != null && firstChoice['message']['content'] != null) {
+          analysis = firstChoice['message']['content'] as String? ?? '';
+        } else if (firstChoice['text'] != null) {
+          analysis = firstChoice['text'] as String? ?? '';
+        }
+      }
+    }
+
     return MoodAnalysisResponse(
-      analysis: json['analysis'] as String? ?? '',
+      analysis: analysis,
       moodScore: json['mood_score'] as int? ?? 3,
       timestamp: json['timestamp'] as String? ?? DateTime.now().toIso8601String(),
     );
   }
+
   
   Map<String, dynamic> toJson() {
     return {

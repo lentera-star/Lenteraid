@@ -35,6 +35,12 @@ class ApiConfig {
   static const String healthEndpoint = '/health';
 }
 
+/// Available AI Model Modes
+enum AiModelMode {
+  smart, // Modal GPU (Fine-tuned, Best Quality, Empathic)
+  fast   // VPS (Compressed, Lowest Latency, Quick Reply)
+}
+
 /// API Client for communicating with LENTERA backend
 class ApiClient {
   final String baseUrl;
@@ -52,19 +58,39 @@ class ApiClient {
   /// Uses Supabase Edge Function proxy in production to avoid CORS issues.
   Future<Map<String, dynamic>> sendChatMessage({
     required String message,
+    List<Map<String, String>>? history,
     String? userId,
     String? conversationId,
+    AiModelMode mode = AiModelMode.smart,
   }) async {
     try {
+      // Build messages array
+      final List<Map<String, String>> messages = [];
+      
+      // Add default system prompt
+      messages.add({
+        'role': 'system', 
+        'content': 'Kamu adalah Sahabat Lentera, asisten kesehatan mental yang santai, hangat, dan suportif. Berbicaralah seperti teman dekat. PENTING: Ingat dan gunakan detail yang dibagikan pengguna sebelumnya (seperti nama atau cerita mereka) untuk membangun percakapan yang berkelanjutan. Jangan memberikan ringkasan diagnosis atau poin-poin panjang kecuali diminta.'
+      });
+      
+      // Add history if available
+      if (history != null && history.isNotEmpty) {
+        messages.addAll(history);
+      }
+      
+      // Add current user message
+      messages.add({'role': 'user', 'content': message});
+
       if (!ApiConfig._useLocal) {
         // Production: Use Supabase Edge Function Proxy
         final response = await Supabase.instance.client.functions.invoke(
           'proxy_ai',
           body: {
             'endpoint': ApiConfig.chatEndpoint,
-            'message': message,
+            'messages': messages,
             'user_id': userId,
             'conversation_id': conversationId,
+            'model_mode': mode.name, // 'smart' or 'fast'
           },
         );
 
@@ -83,11 +109,12 @@ class ApiClient {
           url,
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
-            'message': message,
+            'messages': messages,
             'user_id': userId,
             'conversation_id': conversationId,
           }),
         );
+
         
         if (response.statusCode == 200) {
           return jsonDecode(response.body) as Map<String, dynamic>;

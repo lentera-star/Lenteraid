@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lentera/components/pill_tag.dart';
 import 'package:lentera/nav.dart';
+import 'package:lentera/services/ai_service.dart';
 import 'package:lentera/theme.dart';
+
 
 class AiChatScreen extends StatefulWidget {
   /// When shown inside a bottom navigation tab, set [showBack] to false
@@ -25,6 +27,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
   final List<_ChatMessage> _messages = <_ChatMessage>[];
   final TextEditingController _controller = TextEditingController();
   bool _isTyping = false;
+  AiModelMode _selectedMode = AiModelMode.smart;
 
   @override
   void initState() {
@@ -60,7 +63,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
         duration: const Duration(milliseconds: 240));
   }
 
-  Future<void> _simulateAiReply(String prompt) async {
+  Future<void> _callAI(String prompt) async {
     setState(() => _isTyping = true);
     // Insert a lightweight typing placeholder item
     final typing = _ChatMessage(text: 'typing', isUser: false, timestamp: DateTime.now(), isTyping: true);
@@ -68,34 +71,71 @@ class _AiChatScreenState extends State<AiChatScreen> {
     _listKey.currentState?.insertItem(_messages.length - 1,
         duration: const Duration(milliseconds: 180));
 
-    await Future.delayed(const Duration(milliseconds: 1200));
+    try {
+      // Prepare conversation history (exclude current prompt and typing/error messages)
+      final nonTypingMessages = _messages.where((m) => 
+        !m.isTyping && 
+        m.text != prompt && 
+        !m.text.contains('kesulitan merespons')
+      ).toList();
+      
+      final historyCount = nonTypingMessages.length;
+      final history = nonTypingMessages
+          .skip(historyCount > 15 ? historyCount - 15 : 0)
+          .map((m) => {
+                'role': m.isUser ? 'user' : 'assistant',
+                'content': m.text,
+              })
+          .toList();
 
-    // Remove typing item
+      // Call real AI via AIService → Supabase → Modal GPU
+      final aiService = AIService();
+      final response = await aiService.sendMessage(
+        message: prompt,
+        history: history,
+        mode: _selectedMode,
+      );
+      
+      // Remove typing indicator
+      _removeTypingIndicator();
+      
+      // Insert real AI response
+      final showRag = prompt.toLowerCase().contains('kemarin') ||
+          prompt.toLowerCase().contains('mood') ||
+          prompt.toLowerCase().contains('journal');
+      _insertAiMessage(
+        text: response.message.isNotEmpty 
+            ? response.message 
+            : 'Maaf, aku sedang kesulitan merespons. Coba lagi nanti ya.',
+        showRag: showRag,
+      );
+    } catch (e) {
+      debugPrint('AI Error: $e');
+      _removeTypingIndicator();
+      _insertAiMessage(
+        text: '⚠️ Koneksi ke AI bermasalah. Pastikan internet tersambung dan coba lagi.',
+        showRag: false,
+      );
+    }
+
+    if (mounted) setState(() => _isTyping = false);
+  }
+
+  void _removeTypingIndicator() {
     final typingIndex = _messages.indexWhere((m) => m.isTyping);
     if (typingIndex != -1) {
-      final removed = _messages.removeAt(typingIndex);
+      _messages.removeAt(typingIndex);
       _listKey.currentState?.removeItem(
         typingIndex,
         (context, animation) => SizeTransition(
           sizeFactor: animation,
-          child: _TypingBubble(),
+          child: const _TypingBubble(),
         ),
         duration: const Duration(milliseconds: 160),
       );
     }
-
-    // Example deterministic reply with markdown and optional RAG badge
-    final showRag = prompt.toLowerCase().contains('kemarin') ||
-        prompt.toLowerCase().contains('mood') ||
-        prompt.toLowerCase().contains('journal');
-    _insertAiMessage(
-      text:
-          '**Terima kasih sudah berbagi.** Dari ceritamu, aku menangkap beberapa hal penting:\n\n- Emosi utama: mungkin cemas dan lelah\n- Pemicu: tekanan dari pekerjaan dan ekspektasi diri\n\nCoba latihan napas 4-4-6 selama 2 menit. Jika kamu mau, kita bisa gali satu hal kecil yang bisa kamu kontrol hari ini. ❤️',
-      showRag: showRag,
-    );
-
-    if (mounted) setState(() => _isTyping = false);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -126,14 +166,24 @@ class _AiChatScreenState extends State<AiChatScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'Sahabat Lentera',
-                          style: textTheme.titleLarge?.semiBold.withColor(chatColors.slateBlue),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Sahabat Lentera',
+                              style: textTheme.titleLarge?.semiBold.withColor(chatColors.slateBlue),
+                            ),
+                            Text(
+                              _selectedMode == AiModelMode.smart ? 'Smart (Llama 3)' : 'Fast (VPS)',
+                              style: textTheme.labelSmall?.copyWith(color: chatColors.slateBlue.withOpacity(0.6)),
+                            ),
+                          ],
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          width: 10,
-                          height: 10,
+                          width: 8,
+                          height: 8,
                           decoration: BoxDecoration(
                             color: chatColors.onlineGreen,
                             shape: BoxShape.circle,
@@ -142,6 +192,50 @@ class _AiChatScreenState extends State<AiChatScreen> {
                       ],
                     ),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.tune),
+                  color: chatColors.deepTeal,
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: theme.scaffoldBackgroundColor,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      builder: (context) => Container(
+                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Pilih Model AI', style: textTheme.titleLarge),
+                            const SizedBox(height: 16),
+                            ListTile(
+                              leading: const Icon(Icons.auto_awesome, color: Colors.amber),
+                              title: const Text('Smart (Llama 3.1)'),
+                              subtitle: const Text('Fine-tuned untuk empati & curhat.'),
+                              trailing: _selectedMode == AiModelMode.smart ? Icon(Icons.check_circle, color: theme.primaryColor) : null,
+                              onTap: () {
+                                setState(() => _selectedMode = AiModelMode.smart);
+                                Navigator.pop(context);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.bolt, color: Colors.blue),
+                              title: const Text('Fast (Compressed)'),
+                              subtitle: const Text('Model ringan & cepat di VPS.'),
+                              trailing: _selectedMode == AiModelMode.fast ? Icon(Icons.check_circle, color: theme.primaryColor) : null,
+                              onTap: () {
+                                setState(() => _selectedMode = AiModelMode.fast);
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  tooltip: 'Ganti Model AI',
                 ),
                 IconButton(
                   icon: const Icon(Icons.phone),
@@ -197,7 +291,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 if (text.isEmpty) return;
                 _controller.clear();
                 _insertUserMessage(text);
-                _simulateAiReply(text);
+                _callAI(text);
+
               },
             ),
           ],

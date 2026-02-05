@@ -102,20 +102,22 @@ def generate(request_data: dict):
         messages = request_data.get("messages", [])
         max_tokens = request_data.get("max_tokens", 256)
         temperature = request_data.get("temperature", 0.7)
+        repeat_penalty = request_data.get("repeat_penalty", 1.1)
         
+        # Simple ChatML-like structure for better model guidance
         prompt = ""
         for msg in messages:
             role = msg.get("role", "user")
             content = msg.get("content", "")
             if role == "system":
-                prompt += f"System: {content}\n\n"
+                prompt += f"<|system|>\n{content}\n"
             elif role == "user":
-                prompt += f"User: {content}\n\n"
+                prompt += f"<|user|>\n{content}\n"
             elif role == "assistant":
-                prompt += f"Assistant: {content}\n\n"
-        prompt += "Assistant: "
+                prompt += f"<|assistant|>\n{content}\n"
+        prompt += "<|assistant|>\n"
         
-        if not prompt.strip() or prompt == "Assistant: ":
+        if not prompt.strip() or prompt == "<|assistant|>\n":
             prompt = request_data.get("prompt", "Hello!")
         
         # Generate
@@ -123,7 +125,8 @@ def generate(request_data: dict):
             prompt,
             max_tokens=max_tokens,
             temperature=temperature,
-            stop=["User:", "\n\n"],
+            repeat_penalty=repeat_penalty,
+            stop=["<|user|>", "<|system|>", "<|assistant|>", "\n\n\n"],
             echo=False
         )
         

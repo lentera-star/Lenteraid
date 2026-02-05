@@ -5,8 +5,10 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Modal Serverless GPU Endpoint
+// Modal Serverless GPU Endpoint (Smart/Fine-tuned)
 const MODAL_ENDPOINT = 'https://lentera-star--lentera-llama-generate.modal.run'
+// VPS Endpoint (Fast/Compressed - Friend A)
+const VPS_ENDPOINT = 'http://84.247.150.83:8000/api/chat'
 
 serve(async (req) => {
     if (req.method === 'OPTIONS') {
@@ -16,6 +18,11 @@ serve(async (req) => {
     try {
         const body = await req.json()
         const mode = body.mode || 'chat'
+        const modelMode = body.model_mode || 'smart' // 'smart' or 'fast'
+
+        // Determine target endpoint
+        const targetEndpoint = modelMode === 'fast' ? VPS_ENDPOINT : MODAL_ENDPOINT
+        console.log(`🎯 Model Mode: ${modelMode} -> Sending to ${targetEndpoint}`)
 
         let messages = []
         if (mode === 'mood_analysis') {
@@ -71,20 +78,30 @@ Berikan insight sesuai format yang sudah ditentukan.`
         } else {
             console.log('💬 Mode: Chat')
             messages = body.messages || []
+
+            // Add default system prompt if empty or no system role present
+            const hasSystem = messages.some((m: any) => m.role === 'system')
+            if (!hasSystem) {
+                messages.unshift({
+                    role: 'system',
+                    content: 'Kamu adalah Sahabat Lentera, asisten kesehatan mental yang empatik, tenang, dan suportif. Berikan jawaban yang singkat, hangat, dan fokus pada pendengaran aktif. Gunakan Bahasa Indonesia yang natural dan hindari pengulangan kalimat yang sama.'
+                })
+            }
         }
 
-        console.log(`📤 Proxying ${mode} request to Modal GPU endpoint`)
+        console.log(`📤 Proxying ${mode} request to target endpoint`)
 
-        // Forward request to Modal
-        const response = await fetch(MODAL_ENDPOINT, {
+        // Forward request to target
+        const response = await fetch(targetEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 messages: messages,
-                max_tokens: body.max_tokens || 512,
+                max_tokens: body.max_tokens || 256, // Lower default for chat
                 temperature: body.temperature || 0.7,
+                repeat_penalty: body.repeat_penalty || 1.1,
             }),
         })
 
@@ -95,17 +112,36 @@ Berikan insight sesuai format yang sudah ditentukan.`
         }
 
         const data = await response.json()
+        const responseText = data.choices?.[0]?.message?.content || ''
 
         console.log('✅ Successfully received response from Modal')
-        console.log('Response preview:', JSON.stringify(data).substring(0, 200))
+        console.log('Response preview:', responseText.substring(0, 100))
+
+        // Transform response based on mode for Flutter AIService compatibility
+        let mappedData = {}
+        if (mode === 'mood_analysis') {
+            mappedData = {
+                analysis: responseText,
+                mood_score: body.mood_rating || 3,
+                timestamp: new Date().toISOString()
+            }
+        } else {
+            mappedData = {
+                message: responseText,
+                conversation_id: body.conversation_id || `conv_${Date.now()}`,
+                timestamp: new Date().toISOString(),
+                is_crisis: false // Optional: could be checked by another AI pass
+            }
+        }
 
         return new Response(
-            JSON.stringify(data),
+            JSON.stringify(mappedData),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 200,
             },
         )
+
 
     } catch (error) {
         console.error('❌ Proxy error:', error.message)

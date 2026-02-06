@@ -1,6 +1,6 @@
-# Phase 1: Dataset Generation
+# LENTERA Fine-Tuning - Complete Guide
 
-## Quick Start
+## 🚀 Quick Start (Phase 1: Dataset Generation)
 
 ### 1. Install Dependencies
 ```bash
@@ -16,55 +16,45 @@ $env:OPENAI_API_KEY="sk-proj-YOUR_KEY_HERE"
 export OPENAI_API_KEY="sk-proj-YOUR_KEY_HERE"
 ```
 
-### 3. Generate Dataset
+### 3. Generate Training Data
 ```bash
-python generate_dataset.py
+cd backend
+python generate_training_data.py --num 1000 --split
 ```
 
-**Expected Output**:
-- `dataset_lentera_raw.json` (~500KB for 30 dialogues)
-- Backup files every 25 dialogues
+**Output**: `train.jsonl` (900 examples), `val.jsonl` (100 examples)
 
-### 4. Convert to Training Format
+---
+
+## 📁 Directory Structure
+
+```
+backend/finetuning/
+├── lentera_config.yaml          # Axolotl training config (Llama 3.1 8B)
+├── train.sh                     # Automated training script
+├── evaluate_model.py            # Ethics compliance testing
+├── train.jsonl                  # Training data (generated)
+├── val.jsonl                    # Validation data (generated)
+└── lentera-lora-output/         # Output directory
+```
+
+---
+
+## 🚀 Training Workflow
+
+### Step 1: Run Training
 ```bash
-python convert_format.py
+chmod +x train.sh
+./train.sh
 ```
 
-**Expected Output**:
-- `dataset_lentera_alpaca.json` (ready for fine-tuning)
-
----
-
-## Cost Estimation
-
-Using **GPT-4o-mini**:
-- 30 scenarios × ~800 tokens = 24K tokens
-- Input: ~$0.01
-- Output: ~$0.02
-- **Total**: ~$0.03
-
-Using **GPT-4**:
-- 30 scenarios × ~800 tokens = 24K tokens
-- **Total**: ~$0.60
-
----
-
-## Next Steps
-
-After completing Phase 1, proceed to:
-- **Phase 2**: Fine-tuning using Google Colab
-  (See Colab notebook in `colab_notebooks/`)
-
----
-
-## File Structure
-
+### Step 2: Evaluate Model
+```bash
+python evaluate_model.py --model ./lentera-lora-output/checkpoint-300 --lora
 ```
-finetuning/
-├── README.md (this file)
-├── generate_dataset.py (Step 1)
-├── convert_format.py (Step 2)
-├── dataset_lentera_raw.json (Generated)
-├── dataset_lentera_alpaca.json (For training)
-└── dataset_backup_*.json (Automatic backups)
-```
+
+### Step 3: Deploy to Modal or Ollama
+- For Modal: Upload merged model to Hugging Face or Volume.
+- For Ollama: Convert to GGUF and import.
+
+(See `FINE_TUNING_GUIDE.md` for full details)

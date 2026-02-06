@@ -1,18 +1,24 @@
+# Test Services
+test_services.py
+test_tts_output.mp3
+
+# Models (downloaded at runtime)
+models/
+*.bin
+*.pt
+
+# Python cache
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-ENV/
+*.pyc
+*.pyo
+
+# Environment
 .env
-.venv
+.env.local
+
+# Logs
 *.log
-.pytest_cache/
-.coverage
-htmlcov/
-dist/
-build/
-*.egg-info/
-.DS_Store
+
+# IDE
+.vscode/
+.idea/

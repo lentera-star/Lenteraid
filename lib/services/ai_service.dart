@@ -1,10 +1,14 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:lentera/models/mood_entry.dart';
+import 'package:lentera/models/conversation.dart';
+import 'package:lentera/config/api_config.dart';
 import 'api_client.dart';
 export 'api_client.dart' show AiModelMode;
 
 /// AI Service - handles all AI-related operations
-/// Communicates with LENTERA backend for chat and mood analysis
+/// Communicates with LENTERA backend for chat, mood analysis and voice
 class AIService {
   final ApiClient _apiClient;
   
@@ -12,8 +16,6 @@ class AIService {
       : _apiClient = apiClient ?? ApiClient();
   
   /// Send message to AI chatbot
-  /// 
-  /// Returns AI response text and metadata
   Future<AIResponse> sendMessage({
     required String message,
     List<Map<String, String>>? history,
@@ -30,7 +32,6 @@ class AIService {
         mode: mode,
       );
 
-      
       return AIResponse.fromJson(response);
     } catch (e) {
       debugPrint('Error in sendMessage: $e');
@@ -39,8 +40,6 @@ class AIService {
   }
   
   /// Analyze mood entry with AI
-  /// 
-  /// Returns AI analysis and insights
   Future<MoodAnalysisResponse> analyzeMood(MoodEntry moodEntry) async {
     try {
       final response = await _apiClient.analyzeMood(
@@ -74,6 +73,36 @@ class AIService {
       return null;
     }
   }
+
+  /// Process audio input for real-time voice call
+  /// Note: Real-time use is better via WebSocket, but this handles simple audio upload
+  Future<Map<String, dynamic>> processAudio({
+    required String userId,
+    required String audioPath,
+  }) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse(ApiConfig.audioEndpoint),
+      );
+
+      request.fields['user_id'] = userId;
+      request.files.add(await http.MultipartFile.fromPath('audio', audioPath));
+
+      final streamedResponse =
+          await request.send().timeout(const Duration(seconds: 60));
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Audio processing failed: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Audio processing error: $e');
+      rethrow;
+    }
+  }
   
   void dispose() {
     _apiClient.dispose();
@@ -95,8 +124,8 @@ class AIResponse {
   });
   
   factory AIResponse.fromJson(Map<String, dynamic> json) {
-    // Robust parsing: check for root 'message' or nested OpenAI-style 'choices'
-    String message = json['message'] as String? ?? '';
+    // Robust parsing
+    String message = json['message'] as String? ?? json['response'] as String? ?? '';
     
     if (message.isEmpty && json['choices'] != null && json['choices'] is List) {
       final choices = json['choices'] as List;
@@ -105,7 +134,6 @@ class AIResponse {
         if (firstChoice['message'] != null && firstChoice['message']['content'] != null) {
           message = firstChoice['message']['content'] as String? ?? '';
         } else if (firstChoice['text'] != null) {
-          // Fallback for non-chat completion style
           message = firstChoice['text'] as String? ?? '';
         }
       }
@@ -119,7 +147,6 @@ class AIResponse {
     );
   }
 
-  
   Map<String, dynamic> toJson() {
     return {
       'message': message,
@@ -143,7 +170,6 @@ class MoodAnalysisResponse {
   });
   
   factory MoodAnalysisResponse.fromJson(Map<String, dynamic> json) {
-    // Robust parsing: check for root 'analysis' or nested OpenAI-style 'choices'
     String analysis = json['analysis'] as String? ?? '';
     
     if (analysis.isEmpty && json['choices'] != null && json['choices'] is List) {
@@ -165,7 +191,6 @@ class MoodAnalysisResponse {
     );
   }
 
-  
   Map<String, dynamic> toJson() {
     return {
       'analysis': analysis,
@@ -203,4 +228,6 @@ class BackendStatus {
   }
   
   String get aiMode => info['ai_mode'] as String? ?? 'unknown';
+}
+
 }

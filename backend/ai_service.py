@@ -19,16 +19,11 @@ class AIService:
             self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             self.model = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
             logger.info(f"✓ OpenAI initialized: {self.model}")
-        elif self.mode == "runpod":
-            self.runpod_endpoint = os.getenv("RUNPOD_ENDPOINT_URL")
-            self.runpod_api_key = os.getenv("RUNPOD_API_KEY")
-            
-            if not self.runpod_endpoint:
-                raise ValueError("RUNPOD_ENDPOINT_URL not set in environment")
-            if not self.runpod_api_key:
-                raise ValueError("RUNPOD_API_KEY not set in environment")
-            
-            logger.info(f"✓ RunPod initialized: {self.runpod_endpoint}")
+        elif self.mode == "modal":
+            self.modal_endpoint = os.getenv("MODAL_ENDPOINT_URL")
+            if not self.modal_endpoint:
+                raise ValueError("MODAL_ENDPOINT_URL not set in environment")
+            logger.info(f"✓ Modal initialized: {self.modal_endpoint}")
         else:
             from ollama_service import OllamaService
             self.ollama = OllamaService()
@@ -44,59 +39,57 @@ class AIService:
                 max_tokens=500
             )
             return response.choices[0].message.content
-        elif self.mode == "runpod":
-            return await self._chat_runpod(messages)
+        elif self.mode == "modal":
+            return await self._chat_modal(messages)
         else:
             return await self.ollama.chat(messages)
     
-    async def _chat_runpod(self, messages):
-        """Send request to RunPod serverless endpoint"""
+    async def _chat_modal(self, messages):
+        """Send request to Modal serverless endpoint"""
         try:
-            # Prepare RunPod API payload
+            # Prepare Modal API payload (matches modal_inference.py structure)
             payload = {
-                "input": {
-                    "messages": messages,
-                    "temperature": 0.7,
-                    "max_tokens": 500
-                }
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 500
             }
             
             headers = {
-                "Authorization": f"Bearer {self.runpod_api_key}",
                 "Content-Type": "application/json"
             }
             
-            # Make async HTTP request to RunPod
+            # Make async HTTP request to Modal
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    self.runpod_endpoint,
+                    self.modal_endpoint,
                     json=payload,
                     headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=30)
+                    timeout=aiohttp.ClientTimeout(total=60)
                 ) as response:
                     if response.status != 200:
                         error_text = await response.text()
-                        logger.error(f"RunPod API error {response.status}: {error_text}")
-                        raise Exception(f"RunPod API returned status {response.status}")
+                        logger.error(f"Modal API error {response.status}: {error_text}")
+                        raise Exception(f"Modal API returned status {response.status}")
                     
                     result = await response.json()
                     
-                    # Extract response from RunPod payload
-                    # RunPod typically returns: {"output": {"response": "..."}}
-                    if "output" in result:
-                        output = result["output"]
-                        if isinstance(output, dict):
-                            # Try common response keys
-                            return output.get("response") or output.get("text") or output.get("message", {}).get("content", "")
-                        else:
-                            return str(output)
+                    # Extract response from Modal payload
+                    # Modal returns: {"choices": [{"message": {"content": "..."}}]}
+                    if "choices" in result and len(result["choices"]) > 0:
+                        choice = result["choices"][0]
+                        if "message" in choice:
+                            return choice["message"].get("content", "")
+                        return str(choice)
+                    elif "error" in result:
+                        raise Exception(f"Modal execution error: {result['error']}")
                     else:
-                        logger.warning(f"Unexpected RunPod response format: {result}")
+                        logger.warning(f"Unexpected Modal response format: {result}")
                         return str(result)
                         
         except asyncio.TimeoutError:
-            logger.error("RunPod request timeout")
-            raise Exception("RunPod inference timeout after 30 seconds")
+            logger.error("Modal request timeout")
+            raise Exception("Modal inference timeout after 60 seconds")
         except Exception as e:
-            logger.error(f"RunPod chat error: {e}")
+            logger.error(f"Modal chat error: {e}")
             raise
+

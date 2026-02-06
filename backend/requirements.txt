@@ -1,41 +1,25 @@
 fastapi==0.109.0
 uvicorn==0.27.0
 pydantic==2.5.3
-openai==1.10.0
+openai>=1.12.0
 python-dotenv==1.0.0
-ollama==0.1.6
+python-multipart==0.0.6
+httpx==0.25.2
+ollama>=0.1.6
 websockets==12.0
 openai-whisper==20231117
-torch==2.1.2
+torch>=2.2.0
 torchaudio==2.1.2
 TTS==0.22.0
-pydub==0.25.1
-numpy==1.26.3
-soundfile==0.12.1
-edge-tts==6.1.9
-PyYAML==6.0.1
-aiohttp==3.9.1
-
-# Environment variables
-# Ollama client
-ollama>=0.1.6
-
-# OpenAI (for fine-tuned models)
-openai>=1.12.0
-
-# Audio processing
-numpy>=1.26.0
 pydub>=0.25.1
+numpy>=1.26.0
 soundfile>=0.12.1
-
-# Whisper STT (CPU optimized)
-faster-whisper>=0.10.0
-
-# TTS - SpeechT5 Indonesian
-transformers>=4.38.0
-torch>=2.2.0
-sentencepiece>=0.1.99
-
-# Async support
-aiofiles>=23.2.1
+edge-tts==6.1.12
+PyYAML==6.0.1
 aiohttp>=3.9.1
+faster-whisper>=0.10.0
+ffmpeg-python==0.2.0
+transformers>=4.38.0
+sentencepiece>=0.1.99
+aiofiles>=23.2.1
+modal

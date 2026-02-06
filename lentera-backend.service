@@ -1,0 +1,36 @@
+[Unit]
+Description=LenteraDreamFlow Backend API Service
+After=network.target ollama.service
+Wants=ollama.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/LenteraDreamFlow/backend
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+Environment="OLLAMA_MODEL=lentera-dreamflow"
+Environment="AI_MODE=ollama"
+Environment="OLLAMA_BASE_URL=http://localhost:11434"
+
+# Load environment from .env file
+EnvironmentFile=-/home/ubuntu/LenteraDreamFlow/backend/.env
+
+# Start command
+ExecStart=/usr/bin/python3 main.py
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lentera-backend
+
+[Install]
+WantedBy=multi-user.target

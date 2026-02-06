@@ -1,27 +1,20 @@
-# ===============================
-# MODEL
-# ===============================
+# LENTERA Fine-Tuning Configuration (Llama 3.1 8B)
+# Optimized for mental health AI with ethics compliance
+
 base_model: unsloth/Meta-Llama-3.1-8B
 model_type: LlamaForCausalLM
 tokenizer_type: AutoTokenizer
 
-# ===============================
-# CHAT TEMPLATE
-# ===============================
 chat_template: chatml
 strict: false
 
-# ===============================
 # QLORA 4-BIT
-# ===============================
 load_in_4bit: true
 bnb_4bit_compute_dtype: bfloat16
 bnb_4bit_quant_type: nf4
 bnb_4bit_use_double_quant: true
 
-# ===============================
 # DATASET
-# ===============================
 datasets:
   - path: /workspace/train_chatml.jsonl
     type: chat_template
@@ -38,9 +31,7 @@ eval_dataset:
   field_role: role
   field_content: content
 
-# ===============================
 # TRAINING (ANTI OOM)
-# ===============================
 sequence_len: 2048
 sample_packing: false
 flash_attention: false
@@ -50,9 +41,7 @@ gradient_accumulation_steps: 8
 num_epochs: 3
 learning_rate: 2e-4
 
-# ===============================
 # LORA
-# ===============================
 adapter: lora
 lora_r: 16
 lora_alpha: 32
@@ -63,23 +52,7 @@ lora_target_modules:
   - v_proj
   - o_proj
 
-# ===============================
-# PRECISION
-# ===============================
-bf16: true
-fp16: false
-tf32: true
-
-# ===============================
-# MEMORY SAVER
-# ===============================
-gradient_checkpointing: true
-gradient_checkpointing_kwargs:
-  use_reentrant: false
-
-# ===============================
 # OUTPUT
-# ===============================
 output_dir: /workspace/lentera-lora-out
 logging_steps: 1
 save_steps: 100

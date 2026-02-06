@@ -631,3 +631,92 @@ class _ExpiryFormatter extends TextInputFormatter {
     );
   }
 }
+class InvoiceDialog extends StatelessWidget {
+  final TransactionItemModel item;
+  const InvoiceDialog({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final branding = theme.extension<BrandingColors>() ?? BrandingColors.light;
+    
+    String rupiah(int amount) {
+          final s = amount.toString();
+          final reg = RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))');
+          final formatted = s.replaceAllMapped(reg, (m) => '${m[1]}.');
+          return 'Rp $formatted';
+    }
+
+    return Dialog(
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                    Image.asset('assets/images/qris.png', height: 120, fit: BoxFit.contain),
+                    const SizedBox(height: 16),
+                    Text(
+                        'Invoice Pembayaran',
+                        style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                        textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                        'Demo Receipt',
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        textAlign: TextAlign.center,
+                    ),
+                    const Divider(height: 32),
+                     _row(theme, 'Layanan', item.title),
+                     _row(theme, 'Tanggal', _formatDate(item.time)),
+                     _row(theme, 'ID Transaksi', 'TRX-${item.time.millisecondsSinceEpoch.toString().substring(5)}'),
+                     _row(theme, 'Status', item.status.toString().split('.').last.toUpperCase()),
+                    const Divider(height: 32),
+                    Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                            Text('Total Bayar', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                            Text(rupiah(item.amount), style: theme.textTheme.titleLarge?.copyWith(
+                                color: branding.deepTeal,
+                                fontWeight: FontWeight.w800
+                            )),
+                        ],
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Tutup'),
+                    )
+                ],
+            ),
+        ),
+    );
+  }
+
+  Widget _row(ThemeData theme, String label, String value) {
+      return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                  Text(label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                  Flexible(child: Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600), textAlign: TextAlign.right)),
+              ],
+          ),
+      );
+  }
+
+  String _formatDate(DateTime dt) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    final m = months[dt.month - 1];
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
+    return '${dt.day} $m ${dt.year}, $hh:$mm';
+  }
+}

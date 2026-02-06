@@ -177,8 +177,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                 TransactionItemTile(
                   item: item,
                   onDownload: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Mengunduh invoice...')),
+                    showDialog(
+                      context: context,
+                      builder: (context) => InvoiceDialog(item: item),
                     );
                   },
                 ),
@@ -308,8 +309,71 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         return;
       }
 
-      // 2) Simulate payment success (here you would open a gateway)
-      await Future.delayed(const Duration(milliseconds: 600));
+      // Check if paying with QRIS
+      final selectedMethod = _methods.firstWhere((m) => m.isDefault, orElse: () => _methods.isNotEmpty ? _methods.first : _methods[0]);
+      if (selectedMethod.brand == 'QRIS') {
+        final paid = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Scan QRIS', textAlign: TextAlign.center),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Image.asset(
+                    'assets/images/qris.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.qr_code_2, size: 64, color: Colors.grey),
+                        SizedBox(height: 8),
+                        Text('No Image', style: TextStyle(color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Silakan scan QRIS di atas.\nTekan tombol di bawah jika sudah membayar.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Batal'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Sudah Bayar'),
+              ),
+            ],
+          ),
+        );
+
+        if (paid != true) {
+           await txService.updateTransactionStatus(id: tx.id, status: 'failed');
+           if (!mounted) return;
+           setState(() => _submitting = false);
+           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembayaran dibatalkan')));
+           return;
+        }
+      }
+
+      // 2) Simulate payment success (for Card/others) OR proceed after QRIS confirmation
+      if (selectedMethod.brand != 'QRIS') {
+        await Future.delayed(const Duration(milliseconds: 600));
+      }
       await txService.updateTransactionStatus(id: tx.id, status: 'success');
 
       // 3) Create booking after successful payment
@@ -478,7 +542,19 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               Divider(height: 1, color: theme.colorScheme.outline.withValues(alpha: 0.12)),
               tile(Icons.qr_code_2, 'QRIS', 'Scan QR untuk bayar', () {
                 Navigator.of(context).pop();
-                _showNotImplemented('QRIS');
+                setState(() {
+                  _methods.add(PaymentMethodModel(
+                    id: 'qris_${DateTime.now().millisecondsSinceEpoch}',
+                    brand: 'QRIS',
+                    last4: 'Personal',
+                    expMonth: 12,
+                    expYear: 99,
+                    isDefault: _methods.isEmpty,
+                  ));
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Metode QRIS Personal ditambahkan')),
+                );
               }),
               const SizedBox(height: 16),
             ],

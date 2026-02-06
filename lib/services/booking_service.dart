@@ -120,7 +120,7 @@ class BookingService {
       return await SupabaseService.from(_table)
           .select('*')
           .eq('user_id', userId)
-          .eq('status', 'upcoming')
+          .eq('status', 'scheduled')
           .gte(col, now.toIso8601String())
           .lte(col, to)
           .order(col, ascending: true)
@@ -210,7 +210,7 @@ class BookingService {
         return Booking.fromJson(rows.first);
       } catch (e2) {
         debugPrint('Error creating booking (legacy retry): $e2');
-        return null;
+        throw Exception('Failed to create booking. Error: $e2 (First attempt: $e)');
       }
     }
   }

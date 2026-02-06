@@ -13,6 +13,7 @@ import 'package:lentera/screens/ai_chat_screen.dart';
 import 'package:lentera/models/mood_entry.dart';
 import 'package:lentera/services/mood_service.dart';
 import 'package:lentera/services/gamification_service.dart';
+import 'package:lentera/screens/psychologist_dashboard_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -1181,6 +1182,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: 'Tentang Aplikasi',
                       subtitle: 'Versi v1.0.0',
                       onTap: () => _showAbout(context),
+                    ),
+
+                    const SizedBox(height: AppSpacing.xl),
+                    Text('Area Partner (Demo)', style: textTheme.titleLarge?.semiBold),
+                    const SizedBox(height: AppSpacing.sm),
+                    _buildMenuTile(
+                      context,
+                      icon: Icons.business_center,
+                      color: Colors.orange,
+                      title: 'Mode Psikolog',
+                      subtitle: 'Masuk sebagai Mitra Dokter',
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const PsychologistDashboardScreen()),
+                      ),
                     ),
 
                     const SizedBox(height: AppSpacing.xl),

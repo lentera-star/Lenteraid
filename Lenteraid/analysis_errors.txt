@@ -1,0 +1,49 @@
+﻿warning - The value of the local variable 'labels' isn't used - lib\components\calendar_month.dart:71:11 - unused_local_variable
+warning - The value of the field '_isTyping' isn't used - lib\screens\ai_chat_screen.dart:27:8 - unused_field
+warning - The value of the local variable 'removed' isn't used - lib\screens\ai_chat_screen.dart:76:13 - unused_local_variable
+warning - The value of the local variable 'embeddedInTab' isn't used - lib\screens\ai_chat_screen.dart:105:11 - unused_local_variable
+   info - Don't use 'BuildContext's across async gaps - lib\screens\avatar_shop_screen.dart:63:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\avatar_shop_screen.dart:66:11 - use_build_context_synchronously
+warning - The value of the local variable 'branding' isn't used - lib\screens\avatar_shop_screen.dart:77:11 - unused_local_variable
+warning - The value of the field '_submitting' isn't used - lib\screens\bookings_screen.dart:21:8 - unused_field
+warning - The value of the local variable 'branding' isn't used - lib\screens\bookings_screen.dart:151:11 - unused_local_variable
+warning - The declaration '_showComingSoon' isn't referenced - lib\screens\bookings_screen.dart:316:8 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\screens\bookings_screen.dart:341:30 - use_build_context_synchronously
+warning - The value of the local variable 'theme' isn't used - lib\screens\bookings_screen.dart:353:11 - unused_local_variable
+   info - Don't use 'BuildContext's across async gaps - lib\screens\bookings_screen.dart:372:30 - use_build_context_synchronously
+warning - The value of the local variable 'reg' isn't used - lib\screens\bookings_screen.dart:674:11 - unused_local_variable
+   info - Don't use 'BuildContext's across async gaps - lib\screens\bookings_screen.dart:931:36 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\bookings_screen.dart:943:36 - use_build_context_synchronously
+warning - The declaration '_pickAndUploadAvatar' isn't referenced - lib\screens\edit_profile_screen.dart:52:16 - unused_element
+warning - The declaration '_generateSummary' isn't referenced - lib\screens\home_page.dart:990:10 - unused_element
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\home_page.dart:1459:38 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\home_page.dart:1465:44 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\payment_methods_screen.dart:566:11 - use_build_context_synchronously
+warning - The value of the field '_wsSubscription' isn't used - lib\screens\voice_call_screen.dart:36:23 - unused_field
+  error - Undefined name 'Uint8List' - lib\screens\voice_call_screen.dart:143:23 - undefined_identifier
+  error - The getter 'rating' isn't defined for the type 'MoodEntry' - lib\services\ai_service.dart:41:31 - undefined_getter
+  error - The getter 'emotions' isn't defined for the type 'MoodEntry' - lib\services\ai_service.dart:42:29 - undefined_getter
+  error - The getter 'description' isn't defined for the type 'MoodEntry' - lib\services\ai_service.dart:43:28 - undefined_getter
+warning - The value of the field '_audioSubscription' isn't used - lib\services\audio_recording_service.dart:10:34 - unused_field
+  error - Invalid constant value - lib\services\audio_recording_service.dart:34:18 - invalid_constant
+  error - There's no constant named 'pcm16bit' in 'AudioEncoder' - lib\services\audio_recording_service.dart:34:31 - undefined_enum_constant
+
+flutter : 29 issues 
+found. (ran in 1.9s)
+At line:1 char:1
++ flutter analyze 
+--no-preamble 2>&1 | 
+Out-File -FilePath 
+analysis_erro ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (29 issues    
+ found. (ran in 1.    
+9s):String) [], R    
+emoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 

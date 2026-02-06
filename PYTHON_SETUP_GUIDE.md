@@ -51,7 +51,7 @@ notepad .env
 
 **Paste this in notepad:**
 ```
-OPENAI_API_KEY=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
+OPENAI_API_KEY=your-openai-api-key-here
 ```
 
 **Save & close!**

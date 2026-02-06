@@ -32,61 +32,68 @@ serve(async (req) => {
         const body: QuizRequest = await req.json()
         const { mood_history, count = 3 } = body
 
-        // If no mood history, return static questions
-        if (!mood_history || mood_history.length === 0) {
-            return new Response(
-                JSON.stringify({
-                    questions: getStaticQuestions().slice(0, count),
-                    personalized: false,
-                }),
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*',
-                    },
-                }
-            )
-        }
+        // Analyze mood patterns (if available)
+        let aiPrompt = ''
 
-        // Analyze mood patterns
-        const avgRating = mood_history.reduce((sum, m) => sum + m.mood_rating, 0) / mood_history.length
-        const allTags = mood_history.flatMap(m => m.mood_tags)
-        const tagCounts = allTags.reduce((acc, tag) => {
-            acc[tag] = (acc[tag] || 0) + 1
-            return acc
-        }, {} as Record<string, number>)
-        const commonTags = Object.entries(tagCounts)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 3)
-            .map(([tag]) => tag)
+        if (mood_history && mood_history.length > 0) {
+            // Personalized based on mood history
+            const avgRating = mood_history.reduce((sum, m) => sum + m.mood_rating, 0) / mood_history.length
+            const allTags = mood_history.flatMap(m => m.mood_tags)
+            const tagCounts = allTags.reduce((acc, tag) => {
+                acc[tag] = (acc[tag] || 0) + 1
+                return acc
+            }, {} as Record<string, number>)
+            const commonTags = Object.entries(tagCounts)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 3)
+                .map(([tag]) => tag)
 
-        const journalSummary = mood_history
-            .filter(m => m.journal_text)
-            .map(m => m.journal_text)
-            .join('. ')
-            .slice(0, 500) // Limit context size
+            const journalSummary = mood_history
+                .filter(m => m.journal_text)
+                .map(m => m.journal_text)
+                .join('. ')
+                .slice(0, 500)
 
-        // Build AI prompt
-        const aiPrompt = `Kamu adalah AI edukator kesehatan mental untuk aplikasi LENTERA. 
+            aiPrompt = `Kamu adalah AI edukator kesehatan mental untuk aplikasi LENTERA. 
 
-Berdasarkan mood history user 7 hari terakhir:
-- Rating mood rata-rata: ${avgRating.toFixed(1)}/5
-- Tag yang sering muncul: ${commonTags.join(', ')}
+Berdasarkan mood user hari ini:
+- Rating mood: ${avgRating.toFixed(1)}/5
+- Emosi yang dialami: ${commonTags.join(', ')}
 ${journalSummary ? `- Tema jurnal: "${journalSummary}"` : ''}
 
-Buatlah ${count} pertanyaan trivia edukatif tentang kesehatan mental yang RELEVAN dengan pola mood user di atas. 
+Buatlah ${count} pertanyaan trivia edukatif tentang kesehatan mental yang RELEVAN dengan mood user hari ini.`
+        } else {
+            // General daily mental health questions (no mood history)
+            aiPrompt = `Kamu adalah AI edukator kesehatan mental untuk aplikasi LENTERA.
+
+Buatlah ${count} pertanyaan trivia edukatif harian tentang kesehatan mental yang umum dan bermanfaat untuk kehidupan sehari-hari.
+
+Topik yang bisa dibahas:
+- Manajemen stress dan kecemasan
+- Teknik relaksasi dan mindfulness
+- Pola tidur yang sehat
+- Pentingnya self-care
+- Mengelola emosi
+- Hubungan sosial yang sehat
+- Work-life balance
+
+Pilih topik yang berbeda setiap hari agar variatif dan tidak membosankan.`
+        }
+
+        // Common prompt continuation
+        aiPrompt += `
 
 PENTING:
-1. Fokus pada coping strategies untuk mood yang sering dialami
-2. Berikan tips praktis yang dapat diterapkan sehari-hari
-3. Gunakan Bahasa Indonesia yang santai dan friendly
-4. Pastikan pertanyaan dan jawaban akurat secara medis
+1. Fokus pada coping strategies dan tips praktis
+2. Gunakan Bahasa Indonesia yang santai dan friendly
+3. Pastikan pertanyaan dan jawaban akurat secara medis
+4. Buat pertanyaan yang engaging dan mudah dipahami
 
 Format output HARUS dalam JSON berikut (tanpa markdown, hanya pure JSON):
 {
   "questions": [
     {
-      "question": "Pertanyaan yang relevan dengan mood user?",
+      "question": "Pertanyaan yang relevan dan menarik?",
       "options": ["Opsi A", "Opsi B", "Opsi C", "Opsi D"],
       "correctAnswer": "Opsi B",
       "explanation": "Penjelasan singkat kenapa ini benar dan bagaimana ini membantu."
@@ -94,7 +101,7 @@ Format output HARUS dalam JSON berikut (tanpa markdown, hanya pure JSON):
   ]
 }
 
-Contoh untuk user yang sering stress:
+Contoh:
 {
   "questions": [
     {

@@ -6,14 +6,14 @@ class QuizService {
   final _apiClient = ApiClient();
   final _moodService = MoodService();
 
-  /// Generate personalized quiz based on user's recent mood history
+  /// Generate personalized quiz based on user's mood (daily or recent history)
   Future<List<Map<String, dynamic>>> generateQuiz({
     required String userId,
-    int dayRange = 7,
+    int dayRange = 1,  // Changed to 1 day for daily generation
     int questionCount = 3,
   }) async {
     try {
-      // Fetch mood history for the last [dayRange] days
+      // Fetch mood history - try today first, fallback to recent if empty
       final now = DateTime.now();
       final start = now.subtract(Duration(days: dayRange));
       final moodHistory = await _moodService.getMoodEntriesBetween(
@@ -22,15 +22,9 @@ class QuizService {
         end: now,
       );
 
-      debugPrint('[QuizService] Fetched ${moodHistory.length} mood entries');
+      debugPrint('[QuizService] Fetched ${moodHistory.length} mood entries for today');
 
-      // If no mood history, return static questions
-      if (moodHistory.isEmpty) {
-        debugPrint('[QuizService] No mood history, using static questions');
-        return _getStaticQuestions();
-      }
-
-      // Generate AI quiz
+      // ALWAYS call AI generation - it will handle empty history gracefully
       final result = await _apiClient.generatePersonalizedQuiz(
         userId: userId,
         moodHistory: moodHistory.map((e) => e.toJson()).toList(),
@@ -45,7 +39,7 @@ class QuizService {
       return questions.map((q) => q as Map<String, dynamic>).toList();
     } catch (e) {
       debugPrint('[QuizService] Error generating quiz: $e');
-      // Fallback to static questions
+      // Fallback to static questions only on error
       return _getStaticQuestions();
     }
   }

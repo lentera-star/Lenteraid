@@ -1,15 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:lentera/supabase/supabase_config.dart';
 
-/// Lightweight local gamification state until backend schema is ready.
+/// Lightweight local gamification state with Supabase backend sync.
 /// Stores: koin, xp, level, streak, lastCheckinDate, dailyTarget.
 class GamificationService {
-  // Singleton to provide a single source of truth + notifier for UI updates
+  // Singleton
   GamificationService._();
   static final GamificationService _instance = GamificationService._();
   factory GamificationService() => _instance;
 
-  // Notifies listeners when gamification state changes (e.g., koin/xp/streak)
+  // Notifies listeners when gamification state changes
   final ValueNotifier<int> tick = ValueNotifier<int>(0);
   void _notify() {
     try {
@@ -18,6 +20,7 @@ class GamificationService {
       debugPrint('GamificationService._notify error: $e');
     }
   }
+
   // Keys
   static const _koinKey = 'gf_koin_balance';
   static const _xpKey = 'gf_xp_points';
@@ -31,14 +34,91 @@ class GamificationService {
   static const int _defaultXp = 0;
   static const int _defaultLevel = 1;
   static const int _defaultStreak = 0;
-  static const int _defaultDailyTarget = 1; // default: 1 check-in per day
+  static const int _defaultDailyTarget = 1;
 
   // Rewards
   static const int _checkinKoinReward = 10;
   static const int _checkinXpReward = 20;
 
+  bool _isSyncing = false;
+
+  /// Load from Supabase and update local cache
+  Future<void> _syncFromBackend() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    if (_isSyncing) return;
+
+    _isSyncing = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final response = await Supabase.instance.client
+          .from('user_gamification')
+          .select()
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (response != null) {
+        // Update local cache from backend
+        await prefs.setInt(_koinKey, response['koin'] ?? _defaultKoin);
+        await prefs.setInt(_xpKey, response['xp'] ?? _defaultXp);
+        await prefs.setInt(_levelKey, response['level'] ?? _defaultLevel);
+        await prefs.setInt(_streakKey, response['streak_days'] ?? _defaultStreak);
+        
+        if (response['last_checkin_date'] != null) {
+          await prefs.setString(_lastCheckinKey, response['last_checkin_date']);
+        }
+        
+        debugPrint('☁️ [GamificationService] Synced FROM backend: K=${response['koin']} S=${response['streak_days']}');
+        _notify();
+      } else {
+        // If no record exists, create one with current local data
+        await _syncToBackend();
+      }
+    } catch (e) {
+      debugPrint('GamificationService._syncFromBackend error: $e');
+    } finally {
+      _isSyncing = false;
+    }
+  }
+
+  /// Save local cache to Supabase
+  Future<void> _syncToBackend() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final koin = prefs.getInt(_koinKey) ?? _defaultKoin;
+      final xp = prefs.getInt(_xpKey) ?? _defaultXp;
+      final level = prefs.getInt(_levelKey) ?? _defaultLevel;
+      final streak = prefs.getInt(_streakKey) ?? _defaultStreak;
+      final lastIso = prefs.getString(_lastCheckinKey);
+
+      final data = {
+        'user_id': user.id,
+        'koin': koin,
+        'xp': xp,
+        'level': level,
+        'streak_days': streak,
+        'last_checkin_date': lastIso != null ? lastIso.split('T').first : null, // Send YYYY-MM-DD only
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      await Supabase.instance.client
+          .from('user_gamification')
+          .upsert(data);
+      
+      debugPrint('☁️ [GamificationService] Synced TO backend: K=$koin S=$streak');
+    } catch (e) {
+      debugPrint('GamificationService._syncToBackend error: $e');
+    }
+  }
+
   Future<GamificationSummary> getSummary() async {
     try {
+      // Trigger background sync, but don't await to keep UI snappy
+      _syncFromBackend();
+
       final prefs = await SharedPreferences.getInstance();
       final koin = prefs.getInt(_koinKey) ?? _defaultKoin;
       final xp = prefs.getInt(_xpKey) ?? _defaultXp;
@@ -53,7 +133,7 @@ class GamificationService {
       final doneToday = lastDate != null &&
           lastDate.year == today.year && lastDate.month == today.month && lastDate.day == today.day;
 
-      final xpCycle = 100; // every 100xp -> new level
+      final xpCycle = 100;
       final xpProgress = (xp % xpCycle) / xpCycle;
 
       return GamificationSummary(
@@ -95,7 +175,12 @@ class GamificationService {
       final current = prefs.getInt(_koinKey) ?? _defaultKoin;
       final next = (current + delta).clamp(0, 1 << 30);
       await prefs.setInt(_koinKey, next);
-      _notify();
+      
+      debugPrint('💰 [GamificationService] addKoin: $current → $next (delta: $delta)');
+      
+      _notify(); // Update UI immediately
+      _syncToBackend(); // Sync to DB in background
+      
       return next;
     } catch (e) {
       debugPrint('GamificationService.addKoin error: $e');
@@ -104,7 +189,6 @@ class GamificationService {
   }
 
   /// Marks today's daily check-in once and rewards koin/xp.
-  /// Returns true if this call granted rewards (first check-in of the day).
   Future<bool> markDailyCheckin({int? koinReward, int? xpReward}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -115,7 +199,10 @@ class GamificationService {
 
       final alreadyDone = lastDate != null &&
           lastDate.year == today.year && lastDate.month == today.month && lastDate.day == today.day;
-      if (alreadyDone) return false;
+      if (alreadyDone) {
+        debugPrint('✅ [GamificationService] Already checked in today');
+        return false;
+      }
 
       // Streak
       int streak = prefs.getInt(_streakKey) ?? _defaultStreak;
@@ -123,8 +210,10 @@ class GamificationService {
         final yest = today.subtract(const Duration(days: 1));
         final wasYesterday = lastDate.year == yest.year && lastDate.month == yest.month && lastDate.day == yest.day;
         streak = wasYesterday ? streak + 1 : 1;
+        debugPrint('🔥 [GamificationService] Streak updated: $streak');
       } else {
         streak = 1;
+        debugPrint('🔥 [GamificationService] First streak day!');
       }
 
       // Koin & XP
@@ -138,7 +227,6 @@ class GamificationService {
       koin += rewardKoin;
       xp += rewardXp;
 
-      // Level up logic: 100 xp per level
       while (xp >= 100) {
         xp -= 100;
         level += 1;
@@ -149,7 +237,12 @@ class GamificationService {
       await prefs.setInt(_levelKey, level);
       await prefs.setInt(_streakKey, streak);
       await prefs.setString(_lastCheckinKey, today.toIso8601String());
-      _notify();
+
+      debugPrint('💰 [GamificationService] Rewards granted: $rewardKoin Coins');
+      
+      _notify(); // Update UI
+      await _syncToBackend(); // Sync to DB
+      
       return true;
     } catch (e) {
       debugPrint('GamificationService.markDailyCheckin error: $e');
@@ -163,9 +256,9 @@ class GamificationSummary {
   final int xp;
   final int level;
   final int streak;
-  final int dailyTarget; // number of check-ins per day (v1: 1)
-  final int todayProgress; // number of check-ins done today (v1: 0 or 1)
-  final double xpProgress; // 0..1 progress toward next level
+  final int dailyTarget;
+  final int todayProgress;
+  final double xpProgress;
 
   const GamificationSummary({
     required this.koin,
